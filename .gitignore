@@ -1,0 +1,35 @@
+# Unity generated
+Library/
+Temp/
+Logs/
+obj/
+Build/
+Builds/
+UserSettings/
+MemoryCaptures/
+RecordedPlaySessions/
+
+# Unity meta files (only ignore if you track source files, not metas)
+# *.meta
+
+# VS / Rider
+.vs/
+.idea/
+*.csproj
+*.sln
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build output
+*.apk
+*.aab
+*.exe
+*.app
+
+# Streaming assets models (large binary files)
+Assets/StreamingAssets/*.bytes
+Assets/StreamingAssets/*.tflite
+Assets/StreamingAssets/*.bin
