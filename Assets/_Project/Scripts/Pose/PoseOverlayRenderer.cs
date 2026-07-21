@@ -51,7 +51,12 @@ namespace WordsInSilence.Pose
 
         void OnUnifiedFrame(HandPoseFrame frame)
         {
-            bool show = ShowPoseLandmarks && frame.PoseFrame != null;
+            // PoseFrame이 없는 프레임(HandOnly 등)은 도트 상태를 변경하지 않는다.
+            // Hand/Pose 두 Provider가 같은 Unity 프레임에서 순차 발행하면
+            // HandOnly가 나중에 와서 도트를 덮어쓰는 현상을 방지한다.
+            if (frame.PoseFrame == null) return;
+
+            bool show = ShowPoseLandmarks;
 
             for (int i = 0; i < DotCount; i++)
             {
@@ -71,8 +76,8 @@ namespace WordsInSilence.Pose
                 if (showCenter)
                 {
                     _shoulderCenterDot.rectTransform.anchoredPosition =
-                        new Vector2(frame.ShoulderCenter.x * _overlayRect.rect.width,
-                                    (1f - frame.ShoulderCenter.y) * _overlayRect.rect.height);
+                        new Vector2((1f - frame.ShoulderCenter.x) * _overlayRect.rect.width,
+                                    frame.ShoulderCenter.y * _overlayRect.rect.height);
                 }
             }
         }
@@ -111,8 +116,11 @@ namespace WordsInSilence.Pose
 
         Vector2 NormalizedToRect(float nx, float ny)
         {
-            return new Vector2(nx * _overlayRect.rect.width,
-                               (1f - ny) * _overlayRect.rect.height);
+            // X: 미러 표시 보정 → 좌우 반전
+            // Y: GetPixels32()가 bottom-up 순서이므로 반전 불필요
+            return new Vector2(
+                (1f - nx) * _overlayRect.rect.width,
+                ny * _overlayRect.rect.height);
         }
 
         void HideAll()
