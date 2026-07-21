@@ -1,6 +1,6 @@
 # Phase 진행 상태
 
-최종 갱신: 2026-07-20
+최종 갱신: 2026-07-21
 
 ## 현재 Phase
 
@@ -8,7 +8,10 @@
 |---|---|---|
 | Phase 0 — 플러그인 호환성 검증 | 진행 중 | 사용자 수동 설치 단계 대기 |
 | Phase 1 — WebCam 기술 스파이크 | 구현 완료 | 검증 필요 |
-| Phase 2 이상 | 미착수 | |
+| Phase 2 — Hand Landmarker 스파이크 | 구현 완료 | 씬 배선 + Editor 검증 필요 |
+| Phase 3 — 동작 인식 파이프라인 | 구현 완료 | Hand 기반 |
+| Phase 3.5 — Pose Landmarker 통합 | 구현 완료 | 씬 배선 + Editor 검증 필요 |
+| Phase 4 이상 | 미착수 | |
 
 ## Phase 0 체크리스트
 
@@ -38,3 +41,18 @@
 - [ ] PlayMode 테스트 통과 (웹캠 비의존 테스트)
 
 > Phase 1 수동 체크리스트: `Docs/Testing/MANUAL_TEST_CHECKLIST.md`
+
+## Phase 3.5 체크리스트
+
+- [ ] `MediaPipeRuntime` 공유 초기화 — Hand+Pose 동시 실행 시 Glog 크래시 없음
+- [ ] `PoseLandmarkProvider` — pose_landmarker_lite.bytes 로드 성공
+- [ ] `PoseBodyMathTests` 16개 통과
+- [ ] 기존 EditMode/PlayMode 테스트 18개 유지
+- [ ] `02_PoseIntegration` 씬 생성 (01_WebCamSpike 복제)
+- [ ] `PoseLandmarkProvider` / `HandPoseIntegrator` / `PoseOverlayRenderer` 씬 배선
+- [ ] Editor Play → 어깨/팔꿈치/손목 점 오버레이 확인 (노란 점 7개)
+- [ ] 어깨 중심 빨간 점 표시 확인
+- [ ] 진단 UI — FPS / Quality / ShoulderWidth / WristBodyRelative 수치 확인
+- [ ] Hand 미검출 (손을 화면 밖) → 앱 종료 안됨
+- [ ] POSE_INTEGRATION_AUDIT.md 성능 측정값 기입
+- [ ] Windows Standalone Build 검증 (가능하면)

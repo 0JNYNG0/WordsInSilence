@@ -35,40 +35,78 @@
 
 ---
 
-## Phase 2 — Hand Landmarker 기술 스파이크 (미구현)
+## Phase 2 — Hand Landmarker 기술 스파이크
 **목표:** MediaPipe Hand Landmarker를 WebCamTexture 피드에 연결하고 랜드마크를 화면에 오버레이한다.
 
-**예정 작업:**
-- MediaPipeLandmarkProvider 구현 (ILandmarkProvider)
-- LandmarkFrame 데이터 모델
-- 화면 랜드마크 오버레이
-- 손별 검출률 측정
-
-**상태:** 미구현 (Phase 1 완료 후 착수)
+**상태:** 구현 완료 (씬 배선 + Editor 검증 필요)
 
 ---
 
-## Phase 3 — 동작 인식 파이프라인 (미구현)
+## Phase 3 — 동작 인식 파이프라인
 **목표:** 수어 동작을 인식하고 게임 이벤트로 변환하는 파이프라인 구축.
 
-**예정 작업:**
-- IMotionRecorder 구현
-- IMotionEvaluator 구현
-- 수어 사전 데이터 모델
-- Assembly Definition 도입 (D-03 결정 후)
-
-**상태:** 미구현
+**상태:** 구현 완료 (Hand 기반 PoseTemplateEvaluator, SignDictionary, MotionRecorder)
 
 ---
 
-## Phase 4 — 수직 슬라이스 데모 (미구현)
-**목표:** 완전한 수어 상호작용 퀘스트 1개 포함 데모 빌드.
+## Phase 3.5 — Pose Landmarker 및 Hand-Pose 통합 기반
+**목표:** 어깨/팔꿈치/손목 감지 → Hand+Pose 통합 프레임 → 신체 기준 손 위치 정규화 기반 완성.
+기존 Hand 인식 기능(0.15 임계값, SignDictionary, MotionRecorder)은 일체 수정하지 않는다.
 
-**상태:** 미구현
+**완료 조건:**
+- [ ] PoseBodyMathTests 16개 통과
+- [ ] 기존 테스트 18개 유지
+- [ ] 02_PoseIntegration 씬 Play → 어깨/팔꿈치/손목 오버레이 확인
+- [ ] Hand 미검출 시 앱 종료 안됨
+- [ ] 진단 UI에서 FPS/품질/신체 좌표 확인
+- [ ] POSE_INTEGRATION_AUDIT.md 성능 측정값 기입
+
+**상태:** 구현 완료 (씬 배선 + Editor 검증 필요)
+
+---
+
+## Phase 4 — Unified Motion Recording
+**목표:** Hand+Pose 통합 녹화 저장/로드. HandPoseRecording ScriptableObject 래퍼. RecognitionTestUI 연동.
+
+**상태:** 미착수
+
+---
+
+## Phase 5 — Multi-Component Evaluation
+**목표:** HandShapeError / BodyRelativePositionError / ArmPoseError 분리. 표현별 EvaluationProfile.
+
+**상태:** 미착수
+
+---
+
+## Phase 6 — Reference Set and Evaluation Profiles
+**목표:** 기준 동작 3~5회 다중 녹화, 표현별 가중치, Pose 필수 여부 설정.
+
+**상태:** 미착수
+
+---
+
+## Phase 7 — Sign Interaction Sandbox
+**목표:** ISignInteractionService / IMotionEvaluator 기반 NPC 상호작용 테스트. 웹캠 없이 녹화 재생 테스트 가능.
+
+**상태:** 미착수
+
+---
+
+## Phase 8 — 실제 한국수어 콘텐츠
+**목표:** 공식 자료 기반, 전문가 검토 후 표현 등록. Face Landmarker 필요 시 별도 스파이크.
+
+**상태:** 미착수
+
+---
+
+## Phase 9 — RPG Vertical Slice
+**목표:** 소형 지역, NPC 3명, 퀘스트 3개, 검증된 표현 5~8개, Windows 빌드.
+
+**상태:** 미착수
 
 ---
 
 ## 주의 사항
-- 이 문서는 Phase 0~1 구현 이후 단계를 포함하며, Phase 2 이상은 아직 설계 단계다.
 - 각 Phase 완료 조건 달성 후 다음 Phase로 진행한다.
 - MediaPipe 호환성 이슈 발생 시 대안 라이브러리 검토 (Phase 0 판정 포함).
