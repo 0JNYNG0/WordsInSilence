@@ -41,12 +41,18 @@ namespace WordsInSilence.Pose
         void OnHandFrame(LandmarkFrame frame)
         {
             _latestHandFrame = frame;
-            TryCombine();
+            // LateUpdate에서 통합 처리 — 즉시 소비하지 않음
         }
 
         void OnPoseFrame(UpperBodyPoseFrame frame)
         {
             _latestPoseFrame = frame;
+            // LateUpdate에서 통합 처리 — 즉시 소비하지 않음
+        }
+
+        void LateUpdate()
+        {
+            if (_latestHandFrame == null && _latestPoseFrame == null) return;
             TryCombine();
         }
 

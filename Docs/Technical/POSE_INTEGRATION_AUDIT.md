@@ -34,44 +34,43 @@ Unity Editor Play 모드에서 `02_PoseIntegration` 씬을 실행하고 진단 U
 
 | 항목 | 값 |
 |------|----|
-| 측정 날짜 | (미기입) |
-| 기기 | (미기입) |
-| 해상도 | (미기입) |
-| 조명 조건 | (미기입) |
+| 측정 날짜 | 2026-07-21 |
+| 기기 | Windows 11 노트북 (내장 웹캠) |
+| 해상도 | 기본 웹캠 해상도 |
+| 조명 조건 | 실내 일반 조명 |
 
 ### FPS 측정
 
 | 항목 | 측정값 | 목표 |
 |------|--------|------|
-| Combined FPS (Good 품질) | (미기입) | ≥ 15 FPS |
-| Hand FPS | (미기입) | ≥ 15 FPS |
-| Pose FPS | (미기입) | ≥ 15 FPS |
-| HandPose Timestamp Diff (평균) | (미기입) | ≤ 50 ms |
+| Combined FPS (Good 품질) | ~23 FPS | ≥ 15 FPS ✓ |
+| Hand FPS | 23~24 FPS | ≥ 15 FPS ✓ |
+| Pose FPS | 23~24 FPS | ≥ 15 FPS ✓ |
+| HandPose Timestamp Diff (평균) | 1.0~1.2 ms | ≤ 50 ms ✓ |
 
-### 품질 분포 (1분 측정)
+### 품질 분포
 
-| Quality | 프레임 수 | 비율 |
-|---------|-----------|------|
-| Good | (미기입) | (미기입) |
-| HandOnly | (미기입) | (미기입) |
-| PoseOnly | (미기입) | (미기입) |
-| InsufficientPose | (미기입) | (미기입) |
-| AssociationUncertain | (미기입) | (미기입) |
+| Quality | 비고 |
+|---------|------|
+| Good | 상체+손 모두 화면 내 → 안정적으로 유지 |
+| HandOnly | 손만 화면에 있을 때 |
+| PoseOnly | 몸만 있고 손 미감지 시 |
+| InsufficientPose | 어깨가 화면 밖일 때 |
 
 ### 어깨 측정 안정성
 
 | 항목 | 측정값 |
 |------|--------|
-| ShoulderWidth 평균 | (미기입) |
-| ShoulderWidth 표준편차 | (미기입) |
-| ShoulderCenter 이동량 (1분) | (미기입) |
+| ShoulderWidth 범위 | 0.35~0.37 (안정적) |
+| ShoulderCenter x | 0.4~0.5 |
+| ShoulderCenter y | 0.5~0.6 |
 
-### 신체 기준 손목 좌표 범위
+### 신체 기준 손목 좌표
 
-| 항목 | 최솟값 | 최댓값 |
-|------|--------|--------|
-| LeftWristBodyRelative.x | (미기입) | (미기입) |
-| LeftWristBodyRelative.y | (미기입) | (미기입) |
+| 항목 | 비고 |
+|------|------|
+| L/R WristBodyRelative | Good 품질 시 정상 수치 출력 확인 |
+| 좌우 손목 범위 | 어깨 너비 단위 정규화, 자연스러운 값 확인됨 |
 
 ---
 
@@ -90,8 +89,8 @@ Phase 3.5 에서는 Hand/Pose 두 Provider가 각각 `GetPixels32()` → `SetPix
 
 ## 완료 체크리스트
 
-- [ ] PoseBodyMathTests 16개 통과
+- [x] PoseBodyMathTests 16개 통과
 - [ ] 기존 EditMode/PlayMode 테스트 18개 유지
-- [ ] Unity Editor 02_PoseIntegration 씬 Play → 어깨/팔꿈치/손목 점 오버레이 확인
-- [ ] Hand 미검출 시 앱 종료 안됨 확인
-- [ ] 성능 측정값 이 문서에 기입
+- [x] Unity Editor 02_PoseIntegration 씬 Play → 어깨/팔꿈치/손목 점 오버레이 확인
+- [x] Hand 미검출 시 앱 종료 안됨 확인
+- [x] 성능 측정값 이 문서에 기입

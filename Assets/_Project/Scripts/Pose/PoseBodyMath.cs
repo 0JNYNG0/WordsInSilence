@@ -59,7 +59,10 @@ namespace WordsInSilence.Pose
             if (upperArm == Vector2.zero || lowerArm == Vector2.zero)
                 return float.NaN;
 
-            return Vector2.Angle(upperArm, lowerArm);
+            // Vector2.Angle: 같은 방향 = 0°, 반대 방향 = 180°
+            // 생체역학 관례: 팔이 곧게 펴짐 = 180°, 완전히 굽힘 = 0°
+            // → 180 - Vector2.Angle 로 변환
+            return 180f - Vector2.Angle(upperArm, lowerArm);
         }
 
         /// <summary>Vector2 에 NaN 또는 Infinity 성분이 포함됐는지 검사한다.</summary>
