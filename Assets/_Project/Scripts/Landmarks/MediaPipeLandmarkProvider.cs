@@ -29,9 +29,6 @@ namespace WordsInSilence.Landmarks
         [SerializeField] float _minDetectionConfidence = 0.5f;
         [SerializeField] float _minTrackingConfidence = 0.5f;
 
-        // MediaPipe グローバル初期化は 1 回だけ行う
-        static bool s_mediaPipeInitialized;
-
         HandLandmarker _handLandmarker;
         Texture2D _tempTex;
         bool _isRunning;
@@ -72,14 +69,7 @@ namespace WordsInSilence.Landmarks
             if (_tempTex != null)
                 Destroy(_tempTex);
 
-            // Play 세션 종료 시 MediaPipe 네이티브 상태를 정리한다.
-            // 이렇게 해야 다음 Play 세션에서 Glog.Initialize를 다시 호출해도 크래시가 발생하지 않는다.
-            if (s_mediaPipeInitialized)
-            {
-                Protobuf.ResetLogHandler();
-                Glog.Shutdown();
-                s_mediaPipeInitialized = false;
-            }
+            MediaPipeRuntime.Release();
         }
 
         void Update()
@@ -114,12 +104,7 @@ namespace WordsInSilence.Landmarks
 
         async Task InitializeAsync(CancellationToken ct)
         {
-            if (!s_mediaPipeInitialized)
-            {
-                Protobuf.SetLogHandler(Protobuf.DefaultLogHandler);
-                Glog.Initialize("mediapipe");
-                s_mediaPipeInitialized = true;
-            }
+            MediaPipeRuntime.EnsureInitialized();
 
             if (ct.IsCancellationRequested) return;
 
