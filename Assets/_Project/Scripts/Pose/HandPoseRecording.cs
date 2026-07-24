@@ -33,6 +33,9 @@ namespace WordsInSilence.Pose
         public Vector2 RightWristBodyRelative;
 
         public FrameDataQuality Quality;
+
+        /// <summary>얼굴 468개 랜드마크 (없으면 null). Face Landmarker 추가 시 채워진다.</summary>
+        public Vector3[] FacePoints;
     }
 
     /// <summary>
