@@ -100,7 +100,7 @@ def train(features_path, output_path, C=1.0, do_eval=False):
     counts = Counter(labels)
     for word in sorted(counts):
         cnt = counts[word]
-        warn = " ⚠️ 부족" if cnt < 10 else ""
+        warn = " [부족]" if cnt < 10 else ""
         print(f"  {word:12s}: {cnt}개{warn}")
 
     if len(classes) < 2:

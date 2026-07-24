@@ -9,8 +9,13 @@ JSON 파일의 "DisplayName" 필드가 레이블로 사용된다.
 파일이 Unity Unity persistentDataPath/TrainingSamples/ 에 저장된 형식과 동일.
 
 사용법:
-    python extract_features.py --samples-dir "C:\\Users\\local-user\\AppData\\LocalLow\\DefaultCompany\\WordsInSilence\\TrainingSamples"
+    python extract_features.py --samples-dir "C:\\Users\\local-user\\TrainingSamples"
+    python extract_features.py --samples-dir "C:\\Users\\local-user\\TrainingSamples" --recordings-dir "C:\\Users\\local-user\\Recordings"
     python extract_features.py --samples-dir /path/to/samples --output features.csv
+
+--recordings-dir 옵션으로 Recordings/ 폴더(전문가 영상 데이터)도 함께 학습에 포함할 수 있다.
+Recordings/ 의 WristBodyRelative 좌표는 Unity 와 x, y 부호가 반전되어 있어 자동으로 보정된다.
+_slow 파일은 인위적 속도 조정 데이터이므로 자동 제외한다.
 
 필요 패키지: 없음 (표준 라이브러리만 사용)
 """
@@ -444,6 +449,24 @@ def feat_finger_extension(frames):
 
 # ─── 전체 피처 벡터 추출 ──────────────────────────────────────────────────────
 
+def _apply_recordings_coord_fix(recording):
+    """
+    Recordings/ 전문가 영상 데이터의 WristBodyRelative 좌표 보정.
+    extract_landmarks.py (MediaPipe Python) 와 Unity 의 좌표계는
+    x, y 부호가 반전되어 있으므로 부호를 뒤집어 TrainingSamples/ 와 맞춘다.
+    원본 dict 를 직접 수정한다.
+    """
+    for frame in recording.get("Frames", []):
+        for key in ("LeftWristBodyRelative", "RightWristBodyRelative"):
+            v = frame.get(key)
+            if isinstance(v, dict):
+                if v.get("x") is not None:
+                    v["x"] = -v["x"]
+                if v.get("y") is not None:
+                    v["y"] = -v["y"]
+    return recording
+
+
 def extract_features(recording):
     """
     HandPoseRecording JSON dict → 26개 float 리스트.
@@ -493,39 +516,20 @@ def extract_features(recording):
 
 # ─── 진입점 ──────────────────────────────────────────────────────────────────
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="TrainingSamples JSON → 피처 CSV (train_svm.py 입력용)"
-    )
-    parser.add_argument(
-        "--samples-dir", required=True,
-        help="Unity TrainingSamples 폴더 경로"
-             " (보통 .../AppData/LocalLow/DefaultCompany/WordsInSilence/TrainingSamples)"
-    )
-    parser.add_argument(
-        "--output", default="features.csv",
-        help="출력 CSV 파일 경로 (기본: features.csv)"
-    )
-    args = parser.parse_args()
-
-    samples_dir = args.samples_dir
-    if not os.path.isdir(samples_dir):
-        print(f"[오류] 폴더 없음: {samples_dir}")
-        sys.exit(1)
-
-    files = sorted(f for f in os.listdir(samples_dir) if f.endswith(".json"))
-    if not files:
-        print(f"[오류] JSON 파일 없음: {samples_dir}")
-        sys.exit(1)
-
-    print(f"[정보] {len(files)}개 JSON 발견")
-
+def _load_dir(folder, coord_fix=False, source_name=""):
+    """JSON 폴더에서 (label, feats) 행 리스트를 반환한다."""
     rows = []
     skipped = 0
-    label_counts = {}
-
+    files = sorted(f for f in os.listdir(folder) if f.endswith(".json"))
+    print(f"[{source_name}] {len(files)}개 JSON 발견: {folder}")
     for fname in files:
-        path = os.path.join(samples_dir, fname)
+        # _slow 파일 제외
+        if fname.endswith("_slow.json"):
+            print(f"  [제외] {fname}: _slow 파일")
+            skipped += 1
+            continue
+
+        path = os.path.join(folder, fname)
         try:
             with open(path, encoding="utf-8") as fp:
                 rec = json.load(fp)
@@ -540,31 +544,79 @@ def main():
             skipped += 1
             continue
 
+        if coord_fix:
+            _apply_recordings_coord_fix(rec)
+
         feats = extract_features(rec)
 
-        # NaN 개수 경고
         nan_count = sum(1 for v in feats if _is_nan(v))
         if nan_count > 10:
             print(f"  [경고] {fname} ({label}): NaN {nan_count}/{len(feats)}개")
 
-        rows.append([label] + feats)
-        label_counts[label] = label_counts.get(label, 0) + 1
+        rows.append((label, feats))
+        skipped_msg = ""
 
-    if not rows:
+    print(f"  → {len(rows)}개 추출, {skipped}개 건너뜀")
+    return rows
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="TrainingSamples JSON → 피처 CSV (train_svm.py 입력용)"
+    )
+    parser.add_argument(
+        "--samples-dir", required=True,
+        help="Unity TrainingSamples 폴더 경로"
+             " (보통 .../AppData/LocalLow/DefaultCompany/WordsInSilence/TrainingSamples)"
+    )
+    parser.add_argument(
+        "--recordings-dir", default=None,
+        help="전문가 영상 Recordings 폴더 경로 (선택). "
+             "포함 시 각 단어의 기준 앵커로 활용됨. _slow 파일은 자동 제외."
+    )
+    parser.add_argument(
+        "--output", default="features.csv",
+        help="출력 CSV 파일 경로 (기본: features.csv)"
+    )
+    args = parser.parse_args()
+
+    if not os.path.isdir(args.samples_dir):
+        print(f"[오류] 폴더 없음: {args.samples_dir}")
+        sys.exit(1)
+
+    all_rows = []
+
+    # TrainingSamples/ 로드 (좌표 보정 없음)
+    all_rows += _load_dir(args.samples_dir, coord_fix=False, source_name="TrainingSamples")
+
+    # Recordings/ 로드 (좌표 보정 적용)
+    if args.recordings_dir:
+        if not os.path.isdir(args.recordings_dir):
+            print(f"[경고] Recordings 폴더 없음: {args.recordings_dir}")
+        else:
+            all_rows += _load_dir(args.recordings_dir, coord_fix=True, source_name="Recordings")
+
+    if not all_rows:
         print("[오류] 추출된 샘플 없음.")
         sys.exit(1)
+
+    label_counts = {}
+    rows_out = []
+    for label, feats in all_rows:
+        rows_out.append([label] + feats)
+        label_counts[label] = label_counts.get(label, 0) + 1
 
     out_path = args.output
     with open(out_path, "w", newline="", encoding="utf-8") as fp:
         writer = csv.writer(fp)
         writer.writerow(["label"] + FEATURE_NAMES)
-        writer.writerows(rows)
+        writer.writerows(rows_out)
 
-    print(f"\n[완료] {len(rows)}개 샘플 추출 ({skipped}개 건너뜀)")
+    print(f"\n[완료] 총 {len(rows_out)}개 샘플 추출")
     print(f"       저장: {os.path.abspath(out_path)}")
     print("\n단어별 샘플 수:")
     for label, cnt in sorted(label_counts.items(), key=lambda x: x[0]):
-        status = "⚠️  부족 (권장 20개 이상)" if cnt < 10 else ("△ 보통" if cnt < 20 else "✓")
+        status = "[부족] 권장 20개 이상" if cnt < 10 else ("[보통]" if cnt < 20 else "[OK]")
         print(f"  {label:12s}: {cnt:3d}개  {status}")
 
 
