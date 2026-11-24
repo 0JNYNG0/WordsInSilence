@@ -1,0 +1,18 @@
+from core import *
+from graph import record
+ROOT=O.parents[2]
+summary=('후보 구간 자체에 설명 행동이 있는지, 다른 행동이 섞였는지, 확인된 움직임을 모두 담았는지를 나눠 지도학습했다. 공개24영상(16학습/8이 판정부 비교, 기존상류에는 노출)과 두 보기를 사용했다. 짧은5장면은 원본 연속 RGB를 확인해 진행표본만 보강했다. 기존100단어 관측부는 고정했다. 정상 소속 표본과 구간 선택은 개선됐고, 세 초기값 모두 직접 확인된 정상6행동을 보존했다. 순서교환 시험에서는 다른 행동 표본 혼입이6→0으로 줄었지만 확인된 행동을 놓치는 선택이 남아 웹에 반영하지 않았다.')
+cause=('원인 분리에서 올바른 후보는 모두 존재했다. 편집 지점을 가로지르는 짧은 후보가 실제 움직임처럼 선택됐다. 정답 편집위치를 아는 진단에서만 그 후보를 제외하면 세 초기값 모두6행동을 보존하고3영상 역순을 구분했다. 이는 편집 인공물의 영향 증거이지, 실제 사용자 성능 개선이나 운영 해결책이 아니다. 기존 무보조 시험 결과는 그대로 실패로 보존했다. 후보 확률을 교육적 정오/완료 확률로 사용하지 않는다.')
+next_task=('승인된 새벽 작업 계속: G2에서 실제 연속 영상의 후보 선택과 손모양·방향 판정 연결을 진단하고, 순서교환의 인공 접합 영향과 실제 연속 동작 오류를 구분한다. 필요하면 원본 FIT의 연속 부분영상 문맥으로 보완하되 합성 접합을 실제 정상동작으로 학습하지 않는다. 모델/계수/임계값을 DEV에 맞춰 탐색하지 않는다. G2/G3 통과 전 최종8·웹 적용 금지. 오전7시부터 발표용 실제 RGB·스켈레톤·DTW 대응선·시간변화·실패사례·아키텍처/진행흐름을 우선 정리,9시 목표. 사용자 발표자료 직접작성, 슬라이드 구성안과 근거별도 제공. C·T3-F/공통100/기존웹 보존, 사용자·멘토 미접근.')
+(W/'RESULT_KO.txt').write_text('후보 설명 소속 학습 — 중간 검증 결과\n\n'+summary+'\n\n'+cause+'\n\n'+next_task+'\n\n근거: INPUTS_COMPLETE, PRETRAIN_VERIFICATION, TRAINING_COMPLETE, COMPARISON, VERIFICATION, CANDIDATE_AVAILABILITY_DIAGNOSIS, SEAM_DIAGNOSTIC. 같은 Codex 별도 산술검산이며 독립 사람/전문가 정답 아님. 보호477해시 불변.\n',encoding='utf-8')
+record('G2','REWORK',dict(normal_preserved=True,false_support_reduced=True,not_abstention_only=False,three_seeds=True),[W/'COMPARISON.json',W/'VERIFICATION.json',W/'SEAM_DIAGNOSTIC.json'],'Direct candidate supervision gains normal binding and removes reviewed cross-action contamination, but unchanged synthetic reordering misses progression. Oracle edit seam exclusion diagnoses artifact only, not deployable fix. Continue continuous-source/component audit.')
+ce=read(U/'CURRENT_EXECUTION.json');ce.update(at=stamp(),status='G2_CANDIDATE_SUPERVISION_VERIFIED_SEAM_DIAGNOSIS',training_running=False,process_running=False,current_command=None,last_completed=str(W/'VERIFICATION.json'),next=next_task);ce['completed_experiments'].append('candidate_description_supervision');write(U/'CURRENT_EXECUTION.json',ce)
+s=read(O/'STATE.json');s.update(current_stage=U.name,next_single_action=next_task,last_updated=stamp(),updated_at=stamp(),activity_state='OVERNIGHT_CONTINUING');s[U.name].update(status=ce['status'],at=stamp(),latest_evidence=str(W/'VERIFICATION.json'),progress=summary,remaining=cause+' '+next_task);write(O/'STATE.json',s)
+title='2026-11-12 새벽 후보-설명 학습 및 합성 접합 원인 분리'
+p=ROOT/'WordsInSilence_PROJECT_CONTEXT.md';v=p.read_text(encoding='utf-8-sig');assert title not in v
+for marker,body in [('## 8. 현재 상태 — 반드시 새 대화에서 먼저 확인',summary+'\n'+cause),('## 9. 다음 단일 작업',next_task)]:
+ assert marker in v;v=v.replace(marker,marker+'\n\n### '+title+'\n'+body+'\n근거: `research/front_keyphase_v1/ops/word100_web_completion_graph_20261111/candidate_description_supervision/RESULT_KO.txt`, `VERIFICATION.json`, `SEAM_DIAGNOSTIC.json`.\n',1)
+p.write_text(v,encoding='utf-8')
+(ROOT/'NEW_CHAT_HANDOFF.md').write_text('# 최신 인수인계 — 새벽 자율작업 계속\n\n'+summary+'\n\n'+cause+'\n\n'+next_task+'\n\n현재 작업: '+str(U)+'\n이번 결과: '+str(W/'RESULT_KO.txt')+'\n현재 학습/실행 프로세스 없음. 완료한 후보학습3seed/비교/검산 재실행 금지. 최초 prepare 실패2건 보존 후 원본의 짧은 움직임을 실제 확인해 보완. 에이전트3개는 실제 quota 오류 상태를 확인했으며 반복 호출 없음. Codex가 로컬 수행, 독립 전문가 검증 아님. G2 REWORK, G3~G6 미통과, 최종8 미사용.\n',encoding='utf-8')
+with (ROOT/'Docs/PROJECT_DIRECTION_HISTORY_KO.txt').open('a',encoding='utf-8') as f:f.write('\n\n'+title+'\n'+summary+'\n'+cause+'\n판단: 실패 원인을 모델만으로 단정하지 않고 합성 순서시험의 접합 인공물과 실제 연속 동작을 나눠 확인. 접합 위치를 알려준 진단을 실사용 개선으로 포장하지 않음.\n'+next_task+'\n')
+assert read(O/'STATE.json')['next_single_action']==read(U/'CURRENT_EXECUTION.json')['next'];print('Checkpoint synchronized; overnight task active.')

@@ -72,6 +72,27 @@ namespace WordsInSilence.Pose
                    float.IsInfinity(v.x) || float.IsInfinity(v.y);
         }
 
+        /// <summary>
+        /// 어깨→대상점 벡터가 수직 방향에서 벗어난 각도(도)를 반환한다.
+        /// 0° = 완전히 수직(아래), 90° = 수평.
+        /// Y축 방향(위/아래 증가)에 상관없이 동작한다.
+        /// </summary>
+        public static float ArmVerticalAngleDegrees(Vector3 shoulder, Vector3 target)
+        {
+            if (HasNaNOrInfinity3(shoulder) || HasNaNOrInfinity3(target))
+                return float.NaN;
+
+            var armDir = new Vector2(target.x - shoulder.x, target.y - shoulder.y);
+            if (armDir.sqrMagnitude < 1e-8f) return float.NaN;
+
+            // Y축 방향이 위든 아래든, 수직에서 벗어난 각도만 측정
+            var vertical = new Vector2(0f, 1f);
+            float angle = Vector2.Angle(armDir, vertical);
+            // 0°=Y+ 방향, 180°=Y- 방향 모두 "수직"
+            // 수직에서 벗어난 편차: min(angle, 180-angle)
+            return Mathf.Min(angle, 180f - angle);
+        }
+
         static bool HasNaNOrInfinity3(Vector3 v)
         {
             return float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z) ||

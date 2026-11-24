@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Words in Silence · 가상 연습실</title><link rel="icon" href="data:,"><link rel="stylesheet" href="style-v2.css"><link rel="stylesheet" href="live.css"><link rel="stylesheet" href="companion.css"><link rel="stylesheet" href="layout.css"></head>
+<body><main id="stage">
+  <canvas id="world" aria-label="MOA와 캐릭터가 있는 3D 가상 공간"></canvas>
+  <div class="vignette"></div><canvas id="optics" aria-hidden="true"></canvas>
+  <header>
+    <a class="brand" href="#" id="home"><span class="brand-mark">w<span>·</span>s</span><span>WORDS IN SILENCE<small>가상 연습실</small></span></a>
+    <nav class="steps" aria-label="장면 바로가기"><button data-scene="intro" class="selected"><i>01</i> 만나기</button><b></b><button data-scene="practice"><i>02</i> 연습</button><b></b><button data-scene="quest"><i>03</i> 실전</button></nav>
+    <div class="top-controls"><button id="motion" aria-pressed="false">효과 줄이기</button><button id="reset">처음으로 ↺</button></div>
+  </header>
+  <div class="room-label"><span id="room-type">TUTORIAL ROOM</span><h1 id="room-title">처음 만나는, 새로운 대화</h1><p id="room-caption">말 대신 손으로, 함께 시작해요.</p></div>
+  <section id="practice-heading" hidden><span>PRACTICE ROOM</span><h2>모아와 함께 연습하기</h2><p><label>연습 단어 <select id="word"></select></label></p></section>
+  <section id="quest-panel" aria-label="실전 퀘스트 진행" hidden>
+    <div class="quest-eyebrow">배운 동작으로 대화해요 <span>사과를 요청하고, 감사 인사를 전해요</span></div>
+    <ol id="quest-track"></ol><p id="quest-prompt" aria-live="polite"></p>
+    <div id="quest-success" hidden role="status"><span>✓</span><strong>퀘스트 성공</strong><small>필요한 동작을 확인했어요.</small></div>
+  </section>
+  <section id="angle-views" hidden aria-label="같은 시범 동작의 좌우 45도 보기"><div class="angle-heading">다른 각도에서 보기 <span>동시에 재생돼요</span></div><div class="angle-pair"><figure id="angle-left"><figcaption>왼쪽 45°</figcaption></figure><figure id="angle-right"><figcaption>오른쪽 45°</figcaption></figure></div></section>
+  <div id="npc-scan" aria-hidden="true"></div>
+  <div id="avatar-controls" hidden><span>캐릭터 살펴보기</span><div><button id="rotate-left" aria-label="캐릭터 왼쪽으로 회전">↶</button><button id="rotate-right" aria-label="캐릭터 오른쪽으로 회전">↷</button><button id="zoom" aria-label="캐릭터 확대">＋</button><button id="gesture">동작 재생</button><button id="gesture-restart">처음부터</button><button id="gesture-speed">0.5배</button><button id="sign-compare">원본과 나란히</button></div><small id="gesture-note">단어를 고르면 시범을 볼 수 있어요.</small></div>
+  <section id="self-view" hidden aria-label="중앙 아래 내 촬영 화면"><div class="camera-top"><span><i></i> 내 모습</span><small id="camera-label">카메라 꺼짐</small></div><div class="camera-placeholder" id="camera-placeholder"><p>손을 내린 자세로 준비해요</p><small>촬영은 이 PC에서만 분석해요</small></div><img id="live-camera" hidden alt="내 실시간 웹캠"><video id="self-replay" hidden playsinline muted controls></video><strong id="countdown" hidden></strong></section>
+  <aside id="live-controls" hidden><span class="test-label" id="capture-state">분석기 연결 중</span>
+  <div class="capture-buttons"><button id="capture-toggle" disabled><span id="capture-label">촬영</span><kbd>Space</kbd></button><button id="camera-open">카메라 켜기</button><button id="capture-start" disabled>3초 뒤 촬영</button><button id="capture-finish" disabled>수동 종료</button><button id="camera-close" disabled>카메라 닫기 / 취소</button></div>
+  <p id="capture-help">동작 뒤 손을 내리면 자동 종료돼요.</p><p id="result-timing" hidden></p>
+  <button id="quest-reset" hidden>퀘스트 처음부터</button><button id="reference-open">공개 참고 동작 보기</button>
+  <details id="plan"><summary>현재 시연 범위</summary><p>사과 → 감사</p><small>두 단어를 연습한 뒤, 사과를 요청하고 감사 인사를 전해요.</small></details>
+  <details id="public-tools"><summary>공개 자료로 화면 확인</summary><div id="public-examples"></div><small>G6 촬영 연결 경로로 계산한 공개 결과예요. 편집 시험은 따로 표시하며 실전 진행에는 반영하지 않아요.</small></details>
+  </aside>
+  <div id="analysis-busy" hidden role="status"><span class="spinner"></span><h2 id="busy-label">동작을 살펴보고 있어요</h2><p>조금만 기다려 줘. 손모양과 움직임을 확인하고 있어.</p></div>
+  <dialog id="feedback-dialog"><button id="feedback-close" class="dialog-close">닫기 ×</button><h2 id="feedback-title">확인할 순간</h2><p id="feedback-source"></p><p id="coaching-summary"></p><div id="coaching-actions" aria-label="교정할 순간"></div><div id="feedback-cards"></div><div class="comparison"><figure><figcaption>공개 참고 · 표시용 대표 영상</figcaption><div><video id="ref-video" playsinline muted></video><canvas id="ref-skeleton"></canvas></div></figure><figure><figcaption id="query-caption">내 촬영</figcaption><div><video id="query-video" playsinline muted></video><canvas id="query-skeleton"></canvas></div></figure></div><p id="feedback-message"></p><p id="feedback-instruction"></p><div id="feedback-bands"></div><input id="feedback-seek" type="range" min="0" max="1000" value="0" aria-label="비교 시점"><div class="play-buttons"><button id="compare-play">전체 비교 재생</button><button id="compare-stop">멈춤</button><button id="replay-focus" hidden>이 부분만 다시 보기</button><span id="feedback-time"></span></div><small>초록: 확인한 특징이 비슷함 · 주황: 차이 관측 · 회색: 확인 부족(오답 아님). 단어 전체 정답률 점수는 아닙니다.</small></dialog>
+  <dialog id="reference-dialog"><button id="reference-close" class="dialog-close">닫기 ×</button><h2 id="reference-title"></h2><video id="reference-video" controls playsinline muted></video><p>공개 참고 영상 · 사과·감사는 「원본과 나란히」에서 캐릭터와 함께 볼 수 있어요.</p></dialog>
+  <dialog id="sign-dialog"><button id="sign-close" class="dialog-close">닫기 ×</button><iframe id="sign-frame" title="원본과 캐릭터 동작 비교" src="about:blank"></iframe></dialog>
+  <section class="dialogue" id="dialogue" aria-label="대화"><div class="speaker"><i></i><span id="speaker">MOA</span><small id="speaker-role">당신의 수어 연습 친구</small></div><p id="line" aria-live="polite"></p><div id="coach-result"><div id="ranks" hidden></div><button id="show-feedback" hidden>분석 결과 보기 →</button></div><button id="next"><span id="next-label">함께 시작하기</span><span class="arrow">→</span></button><span class="key-tip">Space · 문장 바로 보기 / 다음</span></section>
+  <footer hidden><span>작은 손짓으로 이어지는 세계</span><span id="status">모델을 불러오는 중</span></footer>
+  <div id="loading"><div class="loader-symbol">w<span>·</span>s</div><span class="loading-line"></span><p>연습실을 준비하고 있어요.</p><small>기존 로봇과 캐릭터 불러오는 중</small></div>
+  <div id="error" hidden role="alert"><h2>연습실을 열지 못했어요.</h2><p></p><button onclick="location.reload()">다시 열기</button></div>
+</main><script type="module" src="scene.js"></script><script type="module" src="live.js"></script></body></html>

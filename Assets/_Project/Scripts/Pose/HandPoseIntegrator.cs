@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using WordsInSilence.Core;
 using WordsInSilence.Landmarks;
+using WordsInSilence.Recognition.Diagnostics;
 
 namespace WordsInSilence.Pose
 {
@@ -19,6 +20,10 @@ namespace WordsInSilence.Pose
 
         LandmarkFrame      _latestHandFrame;
         UpperBodyPoseFrame _latestPoseFrame;
+
+        // F54 passive telemetry; null unless WIS_LIVE_PIPELINE_TIMING=1
+        LivePipelineTiming.Channel _timing;
+        bool _timingInitialized;
 
         public event Action<HandPoseFrame> UnifiedFrameArrived;
 
@@ -52,6 +57,16 @@ namespace WordsInSilence.Pose
 
         void LateUpdate()
         {
+            if (!_timingInitialized)
+            {
+                _timing = LivePipelineTiming.CreateOrNull("integrator");
+                _timingInitialized = true;
+            }
+            if (_timing != null)
+            {
+                _timing.MarkEntry(Time.frameCount);
+                _timing.Flush();
+            }
             if (_latestHandFrame == null && _latestPoseFrame == null) return;
             TryCombine();
         }
@@ -67,6 +82,7 @@ namespace WordsInSilence.Pose
 
             if (hasHand && !hasPose)
             {
+                if (_timing != null) _timing.Increment(TimingCounter.HandOnly);
                 Emit(BuildHandOnlyFrame(_latestHandFrame));
                 _latestHandFrame = null;
                 return;
@@ -74,6 +90,7 @@ namespace WordsInSilence.Pose
 
             if (!hasHand && hasPose)
             {
+                if (_timing != null) _timing.Increment(TimingCounter.PoseOnly);
                 Emit(BuildPoseOnlyFrame(_latestPoseFrame));
                 _latestPoseFrame = null;
                 return;
@@ -84,8 +101,13 @@ namespace WordsInSilence.Pose
             long poseMs = _latestPoseFrame.TimestampMs;
             float diff  = Mathf.Abs(handMs - poseMs);
 
+            // measurement only: the compared values, the threshold and every decision below
+            // are unchanged
+            if (_timing != null) _timing.Observe(TimingValue.TimestampDiffMs, diff);
+
             if (diff > _maxTimestampDiffMs)
             {
+                if (_timing != null) _timing.Increment(TimingCounter.Mismatch);
                 // 오래된 쪽 폐기 후 단일 프레임 발행
                 if (handMs < poseMs)
                 {
@@ -101,6 +123,7 @@ namespace WordsInSilence.Pose
             }
 
             // 통합 프레임 생성
+            if (_timing != null) _timing.Increment(TimingCounter.Combined);
             Emit(BuildCombinedFrame(_latestHandFrame, _latestPoseFrame, diff));
             _latestHandFrame = null;
             _latestPoseFrame = null;
@@ -122,7 +145,8 @@ namespace WordsInSilence.Pose
                 RightArmAngleDegrees   = float.NaN,
                 LeftHandPoseWristDist  = float.NaN,
                 RightHandPoseWristDist = float.NaN,
-                Quality = FrameDataQuality.HandOnly
+                Quality = FrameDataQuality.HandOnly,
+                MergedGeometry = new Step9DMergedInferenceGeometry(handFrame.InferenceGeometryResult, null)
             };
         }
 
@@ -130,14 +154,15 @@ namespace WordsInSilence.Pose
         {
             var center = PoseBodyMath.ShoulderCenter(poseFrame.LeftShoulder, poseFrame.RightShoulder);
             var width  = PoseBodyMath.ShoulderWidth2D(poseFrame.LeftShoulder, poseFrame.RightShoulder);
+            bool validShoulders = poseFrame.HasValidShoulders && PoseBodyMath.IsValidShoulderWidth(width);
 
-            return new HandPoseFrame
+            var frame = new HandPoseFrame
             {
                 Timestamp         = poseFrame.Timestamp,
                 TimestampMs       = poseFrame.TimestampMs,
                 PoseFrame         = poseFrame,
                 HasPose           = true,
-                HasValidShoulders = poseFrame.HasValidShoulders,
+                HasValidShoulders = validShoulders,
                 ShoulderCenter    = center,
                 ShoulderWidth     = width,
                 LeftWristBodyRelative  = new Vector2(float.NaN, float.NaN),
@@ -146,8 +171,21 @@ namespace WordsInSilence.Pose
                 RightArmAngleDegrees   = float.NaN,
                 LeftHandPoseWristDist  = float.NaN,
                 RightHandPoseWristDist = float.NaN,
-                Quality = FrameDataQuality.PoseOnly
+                Quality = FrameDataQuality.PoseOnly,
+                MergedGeometry = new Step9DMergedInferenceGeometry(null, poseFrame.InferenceGeometryResult)
             };
+
+            // Pose 손목·팔꿈치로 body-relative 계산 (Hand 없어도 가능)
+            if (validShoulders)
+            {
+                frame.IsValidForBodyRelativeEvaluation = true;
+                frame.LeftWristBodyRelative  = PoseBodyMath.BodyRelative(poseFrame.LeftWrist,  center, width);
+                frame.RightWristBodyRelative = PoseBodyMath.BodyRelative(poseFrame.RightWrist, center, width);
+                frame.LeftArmAngleDegrees    = PoseBodyMath.ArmAngleDegrees(poseFrame.LeftShoulder,  poseFrame.LeftElbow,  poseFrame.LeftWrist);
+                frame.RightArmAngleDegrees   = PoseBodyMath.ArmAngleDegrees(poseFrame.RightShoulder, poseFrame.RightElbow, poseFrame.RightWrist);
+            }
+
+            return frame;
         }
 
         HandPoseFrame BuildCombinedFrame(LandmarkFrame handFrame, UpperBodyPoseFrame poseFrame, float diffMs)
@@ -158,6 +196,35 @@ namespace WordsInSilence.Pose
             bool validShoulders = poseFrame.HasValidShoulders && PoseBodyMath.IsValidShoulderWidth(width);
 
             long handMs = (long)(handFrame.Timestamp * 1000.0);
+
+            var mergedGeometry = new Step9DMergedInferenceGeometry(
+                handFrame.InferenceGeometryResult,
+                poseFrame.InferenceGeometryResult);
+
+            // Fail-closed: if both geometries present but full-contract incompatible, reject
+            if (mergedGeometry.BothAvailable && !mergedGeometry.FullContractCompatible)
+            {
+                return new HandPoseFrame
+                {
+                    Timestamp               = poseFrame.Timestamp,
+                    TimestampMs             = poseFrame.TimestampMs,
+                    HandPoseTimestampDiffMs = diffMs,
+                    HandFrame               = handFrame,
+                    HasLeftHand             = hasLeft,
+                    HasRightHand            = hasRight,
+                    PoseFrame               = poseFrame,
+                    HasPose                 = true,
+                    HasValidShoulders       = false,
+                    LeftWristBodyRelative   = new Vector2(float.NaN, float.NaN),
+                    RightWristBodyRelative  = new Vector2(float.NaN, float.NaN),
+                    LeftArmAngleDegrees     = float.NaN,
+                    RightArmAngleDegrees    = float.NaN,
+                    LeftHandPoseWristDist   = float.NaN,
+                    RightHandPoseWristDist  = float.NaN,
+                    Quality                 = FrameDataQuality.GeometryMismatch,
+                    MergedGeometry          = mergedGeometry
+                };
+            }
 
             var frame = new HandPoseFrame
             {
@@ -177,7 +244,8 @@ namespace WordsInSilence.Pose
                 LeftArmAngleDegrees      = float.NaN,
                 RightArmAngleDegrees     = float.NaN,
                 LeftHandPoseWristDist    = float.NaN,
-                RightHandPoseWristDist   = float.NaN
+                RightHandPoseWristDist   = float.NaN,
+                MergedGeometry           = mergedGeometry
             };
 
             frame.IsValidForBodyRelativeEvaluation = validShoulders;

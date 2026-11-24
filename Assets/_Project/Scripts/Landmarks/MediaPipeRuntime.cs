@@ -21,9 +21,15 @@ namespace WordsInSilence.Landmarks
 
         public static void Release()
         {
-            if (--_refCount <= 0)
+            if (_refCount <= 0)
             {
+                // nothing is acquired; an unbalanced release must not shut down a
+                // runtime another owner may still be using
                 _refCount = 0;
+                return;
+            }
+            if (--_refCount == 0)
+            {
                 Protobuf.ResetLogHandler();
                 Glog.Shutdown();
             }

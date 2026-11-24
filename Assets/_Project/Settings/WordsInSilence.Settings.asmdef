@@ -1,0 +1,14 @@
+{
+    "name": "WordsInSilence.Settings",
+    "rootNamespace": "WordsInSilence.Settings",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

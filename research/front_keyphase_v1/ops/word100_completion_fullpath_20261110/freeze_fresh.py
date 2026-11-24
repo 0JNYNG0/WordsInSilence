@@ -1,0 +1,13 @@
+from common import *
+assert not (F/'FRESH_FROZEN.json').exists()
+rows=read(F/'FRESH_REVIEW.json')['rows'];aud=read(F/'LINEAGE_AUDIT.json')
+assert {r['clip_id'] for r in rows}==set(aud['eligible'])
+notes={'WORD0739':dict(cut=65,removed_groups=[2],rgb_note='Open right hand held near face through65; fingers begin closing at67-69; later fist travels across upper chest. Omit after65 and retain final six rest frames.'),'WORD2523':dict(cut=60,removed_groups=[8],rgb_note='Both hands form upper triangular outline through60; lowering/shape change starts61+. Omit after60 and retain final six rest frames.'),'WORD1133':dict(rgb_note='Open right hand travels along left arm toward wrist; whole normal sequence retained.'),'WORD1567':dict(rgb_note='Alternating hands cross during ongoing movement around57. Normal/crossing control; no assumed mandatory repetition count.')}
+for r in rows:r.update(notes[r['word']]);assert sha(r['source'])==r['source_sha256']
+pins=read(F/'REPLAY_FROZEN.json')['pins'].copy()
+for p in [F/'runtime.py',F/'audit_lineage.py',O/'word100_rtmw_stream_reuse_20261108/stream_runtime.py',F/'extract_fresh.py',F/'evaluate_fresh.py']:
+ pins[str(p)]=sha(p)
+for dirname in ['rtmw_l_384','person_yolox_m']:
+ for p in (O/'word100_rtmw_mediapipe_compare_20261108/models'/dirname).rglob('*.onnx'):pins[str(p)]=sha(p)
+write(F/'FRESH_FROZEN.json',dict(status='FROZEN_BEFORE_NEW_COORDINATES_OR_MODEL_OUTPUT',rows=rows,conditions=['full_normal','speed075','speed125','all_hand_missing','omit_final_event','mask_final_event'],expected_conditions=20,primary=42,training=False,threshold_or_model_selection=False,annotation=dict(author='Codex visual review before outputs',expert=False,dense_frame_truth=False,scope='RGB event separation and rest tail; not finger-coordinate ground truth'),speed='Resample original sequence to 0.75x/1.25x at original frame interval; duplicate source frames have new strictly increasing stream IDs',omission='Synthetic cut plus six existing rest-tail frames, not an actual novice mistake',missing='Remove only hand21 landmarks both sides aftercut/alltime, retainbody; no fabricated joints',gates=['all four normal and both speed variants preserve baseline display','crossing WORD1567 remains baseline-compatible','no omitted event gains false all-required-similar','missing sensor evidence must never gain an educational missing/wrong verdict','all20 conditions remain denominator, failures explicit'],pins=pins,lineage_sha256=sha(F/'LINEAGE_AUDIT.json'),scope='New to audited lineage, not proof of no historical exposure; recorded ID10 only'))
+print('FRESH_FROZEN',len(rows),20)

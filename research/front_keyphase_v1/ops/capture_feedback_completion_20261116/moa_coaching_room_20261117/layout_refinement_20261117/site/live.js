@@ -1,0 +1,52 @@
+import {openFeedback} from './feedback.js';
+const $=id=>document.getElementById(id),client=crypto.randomUUID();
+let meta=null,quest=null,attempt=null,result=null,reference=null,scene='intro',lastState='preparing',delivered=null,requestBusy=false,alive=true,wantCamera=false,opening=false;
+const liveStates=['preview','countdown','recording'],busyStates=['countdown','recording','analysing','finishing'];
+const say=(text,speaker='MOA')=>window.dispatchEvent(new CustomEvent('coach:say',{detail:{text,speaker}}));
+const reaction=state=>window.dispatchEvent(new CustomEvent('coach:reaction',{detail:state}));
+async function get(path){const r=await fetch(path,{cache:'no-store',headers:meta?{'X-Session-Token':meta.token}:{}}),x=await r.json();if(!r.ok)throw Error(x.error||'연결을 확인해 줘.');return x}
+async function command(path,body={}){const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Session-Token':meta.token},body:JSON.stringify({client,...body})}),x=await r.json();if(!r.ok)throw Error(x.error||'요청을 완료하지 못했어.');return x}
+const target=()=>scene==='quest'?quest?.steps[quest.index]?.id:$('word').value;
+function renderQuest(q){quest=q;const root=$('quest-track');if(!root.children.length||root.dataset.gen!==q.generation){root.replaceChildren();root.dataset.gen=q.generation;q.steps.forEach((w,i)=>{if(i){const li=document.createElement('li');li.className='connector';li.setAttribute('aria-hidden','true');li.append(document.createElement('span'));root.append(li)}const li=document.createElement('li');li.dataset.step=i;li.innerHTML='<span class="quest-circle"></span><span class="quest-word"></span>';li.querySelector('.quest-word').textContent=w.label;root.append(li)})}root.querySelectorAll('[data-step]').forEach((el,i)=>{el.classList.toggle('done',i<q.index);el.classList.toggle('current',i===q.index&&!q.completed);el.querySelector('.quest-circle').textContent=i<q.index?'✓':i+1});root.querySelectorAll('.connector').forEach((el,i)=>el.classList.toggle('filled',i<q.index));$('quest-prompt').textContent=q.completed?'':'‘'+q.steps[q.index].label+'’ 동작을 표현해 봐.';$('quest-success').hidden=scene!=='quest'||!q.completed}
+function targetChanged(){if(meta)window.dispatchEvent(new CustomEvent('coach:target',{detail:{word:target(),scene}}))}
+function clearResult(){result=null;reference=null;delivered=null;$('ranks').hidden=true;$('result-timing').hidden=true;$('show-feedback').hidden=true;$('live-controls').classList.remove('has-result');$('self-replay').pause();$('self-replay').hidden=true;}
+async function act(fn){if(requestBusy)return;requestBusy=true;try{await fn()}catch(e){$('capture-state').textContent=e.message;say(e.message);reaction('uncertain')}finally{requestBusy=false}}
+async function ensurePreview(){if(!meta||!wantCamera||opening||requestBusy||!['ready','done'].includes(lastState))return;opening=true;try{await command('/api/open');attempt=null;lastState='opening'}catch(e){wantCamera=false;say('카메라를 열지 못했어. 연결을 확인한 뒤 촬영 버튼을 눌러 줘.');$('capture-state').textContent=e.message}finally{opening=false}}
+window.addEventListener('stage:scene',e=>{scene=e.detail.scene;const shown=['practice','quest'].includes(scene);$('live-controls').hidden=!shown;$('quest-reset').hidden=scene!=='quest';wantCamera=shown;targetChanged();if(quest)renderQuest(quest);if(shown)ensurePreview();else if(meta&&['opening',...liveStates].includes(lastState)&&!busyStates.includes(lastState))act(async()=>{await command('/api/close');lastState='ready';attempt=null;});});
+async function displayResult(data,q,outcome,publicMode=false){result=data;reference=await get('/ref/'+data.word);$('ranks').replaceChildren();for(const [i,r]of(data.tcn_top3||[]).entries()){const el=document.createElement('span');el.className=r.word===data.word?'target':'';const n=document.createElement('small');n.textContent=(i+1)+'위';const t=document.createElement('strong');t.textContent=r.label;el.append(n,t);$('ranks').append(el)}$('ranks').hidden=false;$('show-feedback').hidden=!data.cards?.length;$('live-controls').classList.add('has-result');if(q)renderQuest(q);
+ const difference=data.cards?.some(c=>c.display_status==='difference'),state=data.overall_pass?'success':difference?'correction':'uncertain';reaction(state);
+ if(publicMode){say('공개 자료의 분석 결과야. 자세히 보기를 눌러 동작을 비교할 수 있어.');return}
+ let text=data.coaching?.summary||data.cards?.find(c=>c.display_status==='difference')?.message||'잘 보이지 않은 부분이 있어. 자세한 결과를 함께 살펴보자.';
+ if(data.mode==='quest'&&outcome?.advanced)text=q.completed?'사과를 부탁하고 감사 인사까지 전했네. 대화를 잘 마쳤어!':'‘'+data.label+'’의 필요한 동작을 확인했어. 이제 ‘'+q.steps[q.index].label+'’로 이어가 보자.';
+ else if(data.mode==='quest'&&outcome?.reason==='word_mismatch')text='‘'+(data.tcn_top3?.[0]?.label||'다른 표현')+'’로 인식됐어. 목표 동작을 다시 살펴볼까?';
+ say(text);targetChanged();
+}
+async function captureAction(){if(busyStates.includes(lastState)&&lastState!=='recording')return;if(lastState==='recording'){await command('/api/finish');return}if(lastState==='preview'){clearResult();window.dispatchEvent(new Event('coach:stop-gesture'));const r=await command('/api/start',{word:target(),mode:scene});attempt=r.attempt_id;delivered=null;return}wantCamera=true;await command('/api/open');lastState='opening';attempt=null;}
+$('capture-toggle').onclick=()=>act(captureAction);
+$('camera-open').onclick=()=>act(captureAction);$('capture-start').onclick=()=>act(captureAction);$('capture-finish').onclick=()=>act(captureAction);
+$('camera-close').onclick=()=>act(async()=>{wantCamera=false;await command('/api/close');lastState='ready';attempt=null;$('live-camera').hidden=true;$('live-camera').removeAttribute('src');$('camera-placeholder').hidden=false;});
+$('quest-reset').onclick=()=>act(async()=>{const r=await command('/api/quest/reset');clearResult();renderQuest(r.quest);targetChanged();say('처음부터 다시 대화해 보자.');});
+$('word').onchange=()=>{clearResult();targetChanged();say('동작을 먼저 살펴보고, 준비되면 Space를 눌러 줘.');};
+$('show-feedback').onclick=()=>{if(result&&reference)openFeedback(result,reference)};
+$('reference-open').onclick=()=>act(async()=>{const w=target()||$('word').value,r=await get('/ref/'+w);$('reference-title').textContent=meta.words.find(x=>x.id===w)?.label+' · 공개 참고';$('reference-video').src=r.video;$('reference-dialog').showModal();});
+$('reference-close').onclick=()=>$('reference-dialog').close();$('reference-dialog').addEventListener('close',()=>$('reference-video').pause());
+window.addEventListener('keydown',e=>{if(e.code!=='Space'||!['practice','quest'].includes(scene)||e.repeat||document.querySelector('dialog[open]')||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;e.preventDefault();e.stopImmediatePropagation();if(!$('capture-toggle').disabled)act(captureAction)},true);
+async function poll(){if(!alive||!meta)return;try{const s=await get('/api/status'),busy=busyStates.includes(s.state),live=liveStates.includes(s.state);lastState=s.state;
+ window.dispatchEvent(new CustomEvent('coach:lock',{detail:busy}));window.dispatchEvent(new CustomEvent('coach:preview',{detail:live||s.state==='opening'}));
+ $('capture-toggle').disabled=requestBusy||opening||(!['ready','done','error','preview','recording'].includes(s.state))||(s.state==='preview'&&s.auto_end_ready===false)||(!target())||(scene==='quest'&&quest.completed);
+ $('capture-label').textContent=s.state==='recording'?'수동 종료':s.state==='countdown'?'잠시 후 시작':busy?'분석 중':s.state==='opening'?'카메라 준비 중':['ready','error'].includes(s.state)&&!wantCamera?'카메라 다시 켜기':'촬영';$('capture-toggle').dataset.recording=s.state==='recording';
+ $('camera-close').disabled=busy||!['opening',...liveStates].includes(s.state);$('word').disabled=busy;$('quest-reset').disabled=busy;$('reference-open').disabled=busy;
+ $('capture-state').textContent=({preparing:'분석기를 준비하고 있어',ready:'카메라를 준비할게',opening:'카메라를 열고 있어',preview:s.preparation_message||'손을 내리고 편하게 준비해 줘',countdown:'3초 뒤 시작해',recording:'촬영 중 · '+s.elapsed+'초',analysing:'손모양과 움직임을 살펴보고 있어',finishing:'촬영을 정리하고 있어',done:'동작 확인을 마쳤어',error:s.error})[s.state]||s.state;
+ $('camera-label').textContent=live?'실시간 웹캠':busy?'분석 중':'카메라 준비';
+ if(live){if(!$('live-camera').getAttribute('src'))$('live-camera').src='/preview.mjpeg?token='+encodeURIComponent(meta.token);$('live-camera').hidden=false;$('camera-placeholder').hidden=true;}
+ else if(!busy){$('live-camera').hidden=true;$('live-camera').removeAttribute('src');$('camera-placeholder').hidden=false;}
+ $('self-replay').hidden=true;$('countdown').hidden=s.state!=='countdown';$('countdown').textContent=s.countdown;$('analysis-busy').hidden=!['analysing','finishing'].includes(s.state);
+ if(s.state==='done'&&s.has_result&&attempt&&s.attempt_id===attempt&&delivered!==attempt){delivered=attempt;const d=await get('/api/result?attempt='+attempt);d.result.video='/session-recording/'+attempt+'.mp4?token='+encodeURIComponent(meta.token);await displayResult(d.result,d.quest,d.outcome);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));await command('/api/rendered',{attempt});await ensurePreview();}
+ else if(['ready','done'].includes(s.state))await ensurePreview();
+ }catch(e){$('capture-state').textContent='연결 확인: '+e.message;$('analysis-busy').hidden=true;$('capture-toggle').disabled=true;}finally{if(alive)setTimeout(poll,300)}}
+async function init(){meta=await get('/api/meta');for(const w of meta.words){const o=document.createElement('option');o.value=w.id;o.textContent=w.label;$('word').append(o)}renderQuest(meta.quest);for(const e of meta.examples){const b=document.createElement('button');b.textContent=e.label;b.onclick=()=>act(async()=>{if(busyStates.includes(lastState))return;const d=await get(e.url);await displayResult(d,null,null,true);await openFeedback(d,reference)});$('public-examples').append(b)}targetChanged();poll()}
+window.addEventListener('pagehide',()=>{alive=false;if(meta)fetch('/api/close',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','X-Session-Token':meta.token},body:JSON.stringify({client})}).catch(()=>{})});
+init().catch(e=>{$('capture-state').textContent=e.message;});
+
+
+const placeCamera=()=>{if(!['practice','quest'].includes(scene))return;const r=$('live-controls').getBoundingClientRect();$('self-view').style.setProperty('bottom',(innerHeight-r.top+12)+'px','important');};new ResizeObserver(placeCamera).observe($('live-controls'));window.addEventListener('resize',placeCamera);

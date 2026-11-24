@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using WordsInSilence.Recognition.Diagnostics;
 
 namespace WordsInSilence.Core
 {
@@ -30,6 +31,9 @@ namespace WordsInSilence.Core
 
         /// <summary>감지된 손 목록 (최대 2개).</summary>
         public HandLandmarks[] Hands;
+
+        /// <summary>Typed inference geometry acquisition result from DetectForVideo. Null when provider does not support geometry.</summary>
+        public Step9DGeometryAcquisitionResult InferenceGeometryResult;
     }
 
     /// <summary>

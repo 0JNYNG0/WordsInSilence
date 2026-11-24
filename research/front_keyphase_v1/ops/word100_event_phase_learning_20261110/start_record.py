@@ -1,0 +1,12 @@
+from phase_core import *
+from datetime import datetime
+import ast
+assert not (U/'EVAL_FROZEN.json').exists()
+for p in U.glob('*.py'):ast.parse(p.read_text('utf-8'))
+write(U/'EVAL_FROZEN.json',dict(pins={str(p):sha(p) for p in [U/'evaluate.py',U/'phase_core.py',A/'ORDER_ONLY_COMPLETE.json',A/'FULLPATH_COMPLETE.json']},primary_seed=42,seeds=[42,43,44],boundary_overlap=.5,stage_confidence=.65,phase_confidence=.5,observation=.8,conditions=['normal','upper','slow','fast','reversed_main','missing_2','missing_long'],direct_denominators=dict(moving=21,hold=11,source_videos=12),runtime_conditions=78,comparison='Unlinked active runs versus linked begin/progress/end on same3trained models; no modelselection. Runtime supplements only observed order conflicts; cannot promote completion, alter oldshape/direction or hide unmatched frames.',ground_truth='Reviewedinterval endpoints, weak interior phases. No claim of densehuman/expert gold. IoUmatching is evaluationonly, not runtime intervalselection.',runtime_baseline='Previous order-only candidate78savedoutputs, not a newly deployed model.',scope='Historical repeatedDEV, not fresh generalization. No private input/no download/no deployment.'))
+summary='주요동작별 시작·진행·끝 분리학습 진행. 기존Pcoupled42손모양·방향고정,899공개FIT100단어 공통학습 유지. RGB검토136움직임구간의확인된단점154항목과내부약한단계감독을구분. 1848사전계약통과.3seed학습과공개역사DEV21이동/11유지·78자동조건비교예정. 보완성과미확인.'
+next_text='현재단위 CURRENT_EXECUTION/EVENTS/실제세션 확인후이어받기. 완료된이전468/78비교재실행금지.3seed학습후동결evaluate.py실행,저장산술검산과기존손모양·방향/TCN/DTW보존확인. 짧은동작과미연결구간도남기며정상/속도/교차와오류대조검증. 기존C·T3F/웹8814유지·개인자료접근0.'
+s=(ROOT/'WordsInSilence_PROJECT_CONTEXT.md').read_text('utf-8-sig');tag='### 2026-11-10 주요 동작별 시작·진행·끝 학습 진행'
+for section,txt in [('## 8. 현재 상태 — 반드시 새 대화에서 먼저 확인',summary),('## 9. 다음 단일 작업',next_text)]:s=s.replace(section,section+'\n\n'+tag+'\n'+txt+'\n근거 '+str(U)+'\n',1)
+(ROOT/'WordsInSilence_PROJECT_CONTEXT.md').write_text(s,'utf-8');d=read(O/'STATE.json');d.update(current_stage=U.name,next_single_action=next_text,last_updated=datetime.now().astimezone().isoformat());d[U.name]=dict(status='TRAINING_AND_EVALUATION_PREPARED',summary=summary,next=next_text,execution=str(U/'CURRENT_EXECUTION.json'),default_web_changed=False,private_access=False);write(O/'STATE.json',d)
+(ROOT/'NEW_CHAT_HANDOFF.md').write_text('# WordsInSilence 최신 인수인계\n\n'+summary+'\n\n'+next_text+'\n\n현재단위 '+str(U)+'\n','utf-8');print('Frozen evaluation and project progress synchronized.')

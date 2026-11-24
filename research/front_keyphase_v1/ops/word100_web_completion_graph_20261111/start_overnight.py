@@ -1,0 +1,9 @@
+from graph import *
+ROOT=U.parents[3]
+def main():
+ p=U/'OVERNIGHT_20261112.json';assert not p.exists()
+ write(p,dict(at=stamp(),user_authorized=True,objective='Continue public-source G2 improvements and evidence-gated G3 if passed; prepare comprehensible presentation evidence for final capstone check.',research_cutoff_kst='2026-11-12T07:00:00+09:00',delivery_target_kst='2026-11-12T09:00:00+09:00',research_scope='Source candidate/description supervision, training, normal/error regression; no coefficient search on DEV.',presentation_assets=['Actual public RGB and RTMW skeleton analysis','Body-relative trajectories over source time','DTW correspondence lines with two public performers','Observed action/description learning targets','Before-after improvement AND remaining failure','Implemented vs research architecture','Project evolution since interim presentation','Slide sequence and short speaker points'],visual_policy='Minimal numerical fractions on slides; charts and motion correspondence carry explanation; provenance/details in separate notes. No illustrative result passed off as actual output.',constraints=['C/T3-F/shared100 preserved','No user or mentor source access/training/tuning','No camera','No final8 until G2/G3 gates passed','No download/external upload/Git','No runtime default replacement for presentation'],plan_status='AUTHORIZED_ACTIVE',slides_user_authored=True))
+ ce=read(U/'CURRENT_EXECUTION.json');ce.update(status='G2_CANDIDATE_DESCRIPTION_PREPARATION',at=stamp(),training_running=False,process_running=False,current_command=None,overnight_plan=str(p));write(U/'CURRENT_EXECUTION.json',ce)
+ with (U/'EVENTS.jsonl').open('a',encoding='utf-8') as f:f.write(__import__('json').dumps(dict(at=stamp(),event='USER_APPROVED_OVERNIGHT_AND_PRESENTATION_ASSETS',plan=str(p)),ensure_ascii=False)+'\n')
+ print('Overnight contract saved.')
+if __name__=='__main__':main()

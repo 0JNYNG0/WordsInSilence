@@ -1,0 +1,15 @@
+/* Dialogue follows MOA's projected position, independent of camera panel size. */
+body.focus-scene #dialogue{left:var(--coach-left,70%);right:auto;top:var(--coach-top,56%);bottom:auto!important;display:flex;flex-direction:column;gap:12px;min-height:150px!important;max-height:var(--coach-room,45vh);padding:20px 22px;}
+body.focus-scene #dialogue:before{left:var(--coach-tail,44%);}
+body.focus-scene #dialogue #line{font-size:20px;line-height:1.5;margin:0!important;min-height:0;overflow-y:auto;flex:1 1 auto;}
+body.focus-scene #dialogue #coach-result{margin:0;flex:none;}
+body.focus-scene #dialogue #next{position:static;align-self:flex-end;flex:none;max-width:none;padding:5px 0;}
+#angle-views,#avatar-controls{left:3%;width:32%;max-width:460px;}
+#angle-views{top:22%;}
+.angle-pair{gap:12px;}
+.angle-pair figure{height:36vh;max-height:360px;min-height:200px;}
+#avatar-controls{top:calc(58vh + 44px);}
+#camera-close{position:absolute;right:0;bottom:0;}
+@media(max-height:760px) and (min-width:761px){body.focus-scene #dialogue #line{font-size:18px;}body.focus-scene #dialogue{padding:16px 18px;gap:10px;}}
+@media(max-width:1000px) and (min-width:761px){#angle-views,#avatar-controls{width:30%;left:2%;}body.focus-scene #dialogue{width:27%;padding:16px;}body.focus-scene #dialogue #line{font-size:18px;}}
+@media(max-width:760px){#angle-views,#avatar-controls{left:12px!important;width:28%!important;}#angle-views{top:190px;}.angle-pair figure{height:140px;min-height:0;}.angle-pair{gap:8px;}body.focus-scene #dialogue{left:var(--coach-left,60%);top:var(--coach-top,45%);width:32%;padding:12px!important;min-height:140px!important;gap:10px;}body.focus-scene #dialogue #line{font-size:16px!important;margin:0!important;}body.focus-scene #dialogue #next{max-width:none;}}

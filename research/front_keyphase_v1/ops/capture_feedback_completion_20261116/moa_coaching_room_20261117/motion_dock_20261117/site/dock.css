@@ -1,0 +1,15 @@
+/* Keep the webcam below the torso; capture controls sit beside it. */
+:root{--camera-width:215px;--camera-ratio:1.333333;--dock-bottom:12px;}
+body.focus-scene #self-view{bottom:var(--dock-bottom)!important;width:var(--camera-width)!important;height:auto!important;left:50%;transform:translateX(-50%);}
+#self-view .camera-top{height:26px;padding:0 9px;}
+#self-view #live-camera,#self-view #self-replay{position:relative;top:auto;left:auto;display:block;width:100%;height:auto;object-fit:contain!important;aspect-ratio:auto var(--camera-ratio);}
+#self-view #camera-placeholder{padding:0;height:auto;aspect-ratio:var(--camera-ratio);}
+#self-view #countdown{inset:26px 0 0;}
+body.focus-scene #live-controls{left:auto!important;right:calc(50% + var(--camera-width)/2 + 14px)!important;bottom:20px!important;transform:none!important;width:180px!important;max-height:none!important;}
+#live-controls #capture-state{display:block;line-height:1.4;min-height:0;margin:0 0 8px;word-break:keep-all;}
+#live-controls #capture-toggle{padding:12px 14px!important;font-size:14px!important;gap:15px;}
+#live-controls #capture-help{font-size:10px;line-height:1.45;margin:7px 0;}
+#live-controls #camera-close{position:static;display:block;margin:5px auto 0;font-size:9px!important;}
+#live-controls #reference-open{font-size:9px!important;}
+@media(max-width:760px){body.focus-scene #live-controls{width:152px!important;}#live-controls #capture-toggle{gap:8px;}#live-controls #capture-state{font-size:9px;}}
+@media(max-width:560px){body.focus-scene #self-view{bottom:82px!important;}body.focus-scene #live-controls{right:auto!important;left:50%!important;transform:translateX(-50%)!important;width:200px!important;bottom:8px!important;}#capture-state,#capture-help,#camera-close,#reference-open{display:none!important;}}

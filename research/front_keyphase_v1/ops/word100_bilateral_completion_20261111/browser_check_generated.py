@@ -1,0 +1,74 @@
+from bilateral_core import *
+import subprocess,urllib.request,websocket,base64,uuid,traceback
+BASE='http://127.0.0.1:58356'
+def main():
+ profile=U/('browser_check_'+uuid.uuid4().hex[:8]);profile.mkdir();checks=[];errors=[];requests=[];ws=None
+ def check(name,value):
+  assert value,name
+  checks.append(name)
+ log=(profile/'chrome.log').open('w',encoding='utf-8');proc=subprocess.Popen(['C:/Program Files/Google/Chrome/Application/chrome.exe','--headless=new','--remote-debugging-port=0','--remote-allow-origins=http://127.0.0.1','--disable-background-networking','--disable-component-update','--no-first-run','--autoplay-policy=no-user-gesture-required','--user-data-dir='+str(profile),'--window-size=1366,900','about:blank'],stdout=subprocess.DEVNULL,stderr=log,creationflags=subprocess.CREATE_NO_WINDOW)
+ try:
+  tab=None
+  for _ in range(100):
+   try:
+    port=int((profile/'DevToolsActivePort').read_text().splitlines()[0]);tab=next(x for x in json.load(urllib.request.urlopen(f'http://127.0.0.1:{port}/json/list')) if x['type']=='page');break
+   except (OSError,ValueError,StopIteration):time.sleep(.1)
+  if tab is None:raise RuntimeError('Headless Chrome debugging connection unavailable; inspect chrome.log and local socket permissions')
+  ws=websocket.create_connection(tab['webSocketDebuggerUrl'],origin='http://127.0.0.1',timeout=20);seq=0
+  def call(method,params=None):
+   nonlocal seq
+   seq+=1;ws.send(json.dumps(dict(id=seq,method=method,params=params or {})))
+   while True:
+    r=json.loads(ws.recv())
+    if r.get('method')=='Runtime.exceptionThrown':errors.append(r)
+    if r.get('method')=='Network.requestWillBeSent':requests.append(r['params']['request'])
+    if r.get('id')==seq:
+     assert not r.get('error'),r
+     return r.get('result',{})
+  def js(s):
+   r=call('Runtime.evaluate',dict(expression=s,returnByValue=True,awaitPromise=True));assert not r.get('exceptionDetails'),r;return r.get('result',{}).get('value')
+  def until(s,seconds=20):
+   deadline=time.monotonic()+seconds
+   while time.monotonic()<deadline:
+    if js(s):return
+    time.sleep(.1)
+   raise AssertionError(s)
+  def shot(name):(U/name).write_bytes(base64.b64decode(call('Page.captureScreenshot',dict(format='png',captureBeyondViewport=False))['data']))
+  call('Runtime.enable');call('Page.enable');call('Network.enable');call('Page.navigate',dict(url=BASE));until("typeof meta!=='undefined' && meta && $('ref').readyState>=2")
+  check('camera off initially',js("$('live').hidden && !$('placeholder').hidden && $('query').hidden"));check('no skeleton before result',js('result===null'));shot('UI_START.png')
+  js("document.querySelectorAll('#examples button')[0].click()");until("result?.word==='WORD0739' && $('query').readyState>=2 && $('ref').readyState>=2");check('two public videos decoded',js("$('query').videoWidth>0 && $('ref').videoWidth>0"));check('horizontal top3',js("document.querySelectorAll('.rank').length===3 && new Set([...document.querySelectorAll('.rank')].map(x=>Math.round(x.getBoundingClientRect().top))).size===1"));check('no score bars',js("document.querySelectorAll('.ranks canvas,.ranks progress').length===0"));check('no whole word correctness',js('result.normal_or_wrong===null && result.overall_pass===false'))
+  js('focusCard(0)');until("!$('ref').seeking&&!$('query').seeking");shot('UI_NORMAL.png');js("$('play').click()");until('playing');start=js("$('query').currentTime");time.sleep(.5);check('playback advances',js("$('query').currentTime")>start);js('pause()')
+  
+  check('two separate timeline lanes',js("$('stageBands').children.length>0 && $('bands').children.length>0 && $('stageBands').getBoundingClientRect().top < $('bands').getBoundingClientRect().top"))
+  check('completion distinct from shape',js("$('components').textContent.includes('행동 전체 완료 · 미확인')"))
+  js("window.__unchanged=JSON.stringify(result);$('handZoom').open=true;showAt(result.cards[0].query_seconds[0])");until("!$('ref').seeking&&!$('query').seeking")
+  check('display leaves prediction data intact',js('JSON.stringify(result)===__unchanged'))
+  shot('UI_COMPONENTS.png')
+  for idx in [2,3,4,5]:
+   js(f"(async()=>{{await loadResult(await get(meta.examples[{idx}].url));return true}})()")
+   until("$('query').readyState>=2&&$('ref').readyState>=2")
+   js("window.__unchanged=JSON.stringify(result);focusCard(0)");until("!$('ref').seeking&&!$('query').seeking")
+   check(f'public result {idx} preserved',js('JSON.stringify(result)===__unchanged'))
+   check(f'public result {idx} bounded tracks',js("[...document.querySelectorAll('.trackpart')].every(e=>parseFloat(e.style.left)>=0&&parseFloat(e.style.left)<=100&&parseFloat(e.style.width)<=100)"))
+   if idx==2:
+    js("showAt(result.timestamp_us[result.cards[0].motion_evidence.span[1]]/1e6)");until("!$('ref').seeking&&!$('query').seeking")
+    check('observed wrist arrow labeled',js("$('arrowNote').textContent.includes('관측된 손목 이동')"))
+    check('no hypothetical correction path',js("$('arrowNote').textContent.includes('새로 그린 것이 아님')"))
+   shot(f'UI_PUBLIC_{idx}.png')
+ 
+  js("(async()=>{await loadResult(await get(meta.examples[1].url));return true})()");until('result?.synthetic===true');js('focusCard(2)');until("!$('ref').seeking");check('missing stage reference only',js("result.cards[2].query_indices===null && referenceOnly && $('query').hidden && !$('placeholder').hidden"));check('synthetic disclosed',js("$('notice').textContent.includes('일부러')"));check('nonassertive missing instruction',js("$('message').textContent.includes('확인') && !$('message').textContent.includes('틀렸')"));shot('UI_MISSING.png')
+  for width,height in [(1366,768),(720,1000),(390,844)]:
+   call('Emulation.setDeviceMetricsOverride',dict(width=width,height=height,deviceScaleFactor=1,mobile=width<500));check(f'no overflow {width}',js('document.documentElement.scrollWidth<=innerWidth+2'));check(f'side by side {width}',js("Math.abs($('ref').getBoundingClientRect().top-$('query').parentNode.getBoundingClientRect().top)<3"));shot(f'UI_{width}.png')
+  call('Emulation.setDeviceMetricsOverride',dict(width=1366,height=900,deviceScaleFactor=1,mobile=False))
+  # Mock HTTP boundary only; never invoke the hardware camera route.
+  js("window.__realFetch=fetch;window.__state='ready';window.__posts=[];window.fetch=async(url,opt)=>{if(String(url)==='/api/status')return new Response(JSON.stringify({state:__state,countdown:3,elapsed:1,has_result:false}),{status:200});if(opt?.method==='POST'){__posts.push(String(url));if(String(url)==='/api/open')__state='preview';if(String(url)==='/api/start')__state='countdown';if(String(url)==='/api/close')__state='ready';return new Response(JSON.stringify({ok:true}),{status:200})}return __realFetch(url,opt)}")
+  until("!$('open').disabled");js("$('open').click()");until("previousState==='preview'");js("$('start').click()");until("previousState==='countdown'");check('countdown visible3',js("!$('count').hidden&&$('count').textContent==='3'"));js("__state='recording'");until("previousState==='recording'");check('manual finish available',js("!$('finish').disabled"));js("__state='analysing'");until("!$('busy').hidden");check('loading overlay visible',js("getComputedStyle($('busy')).position==='fixed'"));shot('UI_LOADING.png');js("window.fetch=__realFetch")
+  check('no real camera or start POST',not any(r['method']=='POST' for r in requests));check('only local app requests',all(r['url'].startswith((BASE,'data:','blob:'+BASE)) for r in requests));check('no browser JS exceptions',not errors)
+  write(U/'BROWSER_VERIFIED.json',dict(status='PASS',count=len(checks),checks=checks,errors=errors,camera=False,actual_capture_test=False,ui_mock_not_model_performance=True));print('PASS',len(checks))
+ except BaseException:
+  (U/f'BROWSER_FAILURE_{time.time_ns()}.txt').write_text(traceback.format_exc(),encoding='utf-8');raise
+ finally:
+  if ws:ws.close()
+  if proc.poll() is None:proc.terminate();proc.wait(timeout=10)
+  log.close()
+if __name__=='__main__':main()

@@ -1,0 +1,26 @@
+import prepare as R
+from pathlib import Path
+import shutil,json
+U=R.U;root=R.ROOT
+def finish():
+ a=R.read(U/'IMAGE_VERIFIED.json');p=R.read(U/'PIXEL_GUARD_VERIFIED.json');assert a['clips']==100 and p['clips']==100
+ if not(U/'VISUAL_REVIEW.json').exists():
+  reviewed=['01_identity_conflict.jpg','04_shape_disagreement.jpg','07_yolo_added.jpg','10_yolo_conflict.jpg','13_crossing_request.jpg','16_mp_confirmed.jpg','19_control.jpg']
+  R.write(U/'VISUAL_REVIEW.json',dict(at=R.now(),reviewer='Codex visual inspection of rendered public source overlays;not independent human groundtruth',reviewed_images=[str(U/'visual_100'/x) for x in reviewed],additional_earlier_views=['visual_29/07_yolo_added.jpg','visual_29/08_yolo_added.jpg'],findings=['MP full/crop examples retain plausible overall visible shape,with projection ambiguity for hidden fingertips. Agreement is not exact anatomy.','YOLO crop examples can cluster predicted joints in a small incorrect region on a visible hand; matching after individual similarity fit can hide this.','Retained one extra pixel-guard angle is on WORD1936_REAL03 frame50 right angle12,outside annotated core; it is not proof the whole predicted hand is correct.','Crossing/contact examples have overlapping hands and different/absent predictions. No side reassignment or coordinate replacement applied.','Idle-hand identity conflict scene cannot be resolved merely from a zoomed hand;current arm identity assertion is a contract check,not ground truth.'],unreviewed_gallery_images=14,disposition='NO_PRECISE_CORRECTION_OR_PRODUCTION_PROMOTION;keep raw/MP/YOLO/proxy evidence separately'))
+ import report
+ report.main()
+ result=R.read(U/'REPORT_CHECK.json');assert result['all_image_links_exist']
+ old=R.read(U/'CURRENT_EXECUTION.json');R.write(U/'EXECUTION_ALL100.json',dict(**old,finished_at=R.now(),exit_code=0));(U/'CURRENT_EXECUTION.json').write_text(json.dumps(dict(at=R.now(),status='complete_execution_and_separate_arithmetic;goal_active',active_sessions=[],training=0,production_changes=0),ensure_ascii=False,indent=2),encoding='utf8')
+ now=R.now();status=('公開TRAIN899で一般再確認基準を固定' if False else '공개TRAIN899로 재확인 요청 기준 고정·별도검산,100단어각1영상/9기록ID·3185장면 실제MP/선택YOLO 재확인 완료(exec28646·14074 종료0). 원본좌표/배정/범위/모델불변. 요청손4579·계산가능각도41522 중 MP유사정렬근거26772,결합25478(Y추가15/충돌보류1309). 같은원영상위치·크기보존추가검산:MP25588,결합24245,Y추가1;핵심구간Y추가0. 일부YOLO손관절축소예측이유사정렬후부분통과해정밀피드백채택불가. 원래근거/직접이미지근거둘다보존. 전체100별도수치검산PASS,이미지7장+이전추가2장시각확인,사람21점정답아님. 검산float32입력1차이발견→최초오류/이전코드보존후float64수정·5480쌍일치. 새학습/TCN재채점/운영변경0. 초록상태=해부학정답아님. 목표계속.')
+ nxt=('MP재확인근거와YOLO보조불일치를분리한연구용피드백연결을진행한다. YOLO를정밀손가락교정의확정근거나MP일괄거부권으로채택하지않는다. 원본순간차이/좌표/고정참고분모를보존하고 미요청·미관측·재확인불일치·추가영상근거 상태를각도/시간/출처별표시한다. 기존공개100대표와2개씩다른TRAIN참고를고정연결해 실제쌍에서 비교근거가남는지확인하되새검출전같은고정조건/출처검증;완료재추론금지. 현재영상근거를위치/각도/관측부족으로분리,짧은누락과정상교차보존. 실제21점정답없이정밀교정/인식향상주장금지. C/T3F/E3·운영·원본유지,사용자/멘토/추가199·200 접근금지. 통합연구후보의실제인식/DTW효과는별도고정검증. 작은시험으로전체goal완료금지.')
+ evidence='research/front_keyphase_v1/ops/word100_visible_hand_recheck_20261026/RESULT_KO.html,IMAGE_VERIFIED.json,PIXEL_GUARD_VERIFIED.json,VISUAL_REVIEW.json'
+ backup=U/'before_root_sync';backup.mkdir()
+ paths=[root/'WordsInSilence_PROJECT_CONTEXT.md',root/'NEW_CHAT_HANDOFF.md',R.O/'STATE.json']
+ for path in paths:shutil.copy2(path,backup/path.name)
+ path=paths[0];text=path.read_text(encoding='utf8');h8='## 8. 현재 상태 — 반드시 새 대화에서 먼저 확인';h9='## 9. 다음 단일 작업';assert h8 in text and h9 in text
+ text=text.replace(h8,h8+'\n\n### 2026-10-26 보이는 손 재확인100 및 현재영상근거 검증\n'+now+'\n'+status+'\n근거: '+evidence+'.\n',1);text=text.replace(h9,h9+'\n\n### 2026-10-26 영상근거 출처별 피드백 연결\n'+now+'\n'+nxt+'\n근거: '+evidence+'.\n',1);path.write_text(text,encoding='utf8')
+ state=R.read(paths[2]);state['current_stage']='AUTONOMOUS_VISIBLE_RECHECK100_VERIFIED_SOURCE_SEPARATE_FEEDBACK_NEXT';state['next_single_action']=nxt;state['word100_visible_hand_recheck_20261026']=dict(at=now,status='RESEARCH_RECHECK_AND_PIXEL_GUARD_VERIFIED_NOT_PRODUCTION',summary=status,next=nxt,evidence=evidence,scope=dict(train_calibration_clips=899,image_clips=100,image_frames=3185,signer_ids=list(range(1,10))),counts=a['counts'],pixel_counts=p['counts'],latency=a['latency'],training=0,operating_changed=False,active_sessions=[]);paths[2].write_text(json.dumps(state,ensure_ascii=False,indent=2),encoding='utf8')
+ paths[1].write_text('# WordsInSilence 최신 인수인계\n\n'+now+'\n\n'+status+'\n\n다음 단일 작업: '+nxt+'\n\n근거: '+evidence+'\n\n모든실행종료0,활성세션/잠금없음. U=word100_visible_hand_recheck_20261026. IMAGE_DONE/IMAGE_VERIFIED/PIXEL_GUARD_RESULT/PIXEL_GUARD_VERIFIED 완료재사용. 100영상하나씩고정해시선택은TRAIN개발진단,최종새평가아님. 원래전체손미검출복구와보이는손형태재확인분리. 검출기일치=독립증거/정답아님. IMAGE_VERIFIED의mp_eligible은유사변환형태일치이며PIXEL_GUARD는동일장면그대로좌표검사. YOLO추가1은core밖각도1개,손정확도향상아님. 모델C/T3F/E3및운영파일보호핀확인.\n\n이전근거:FC4500·M600다중참고근거보존검산완료. M600재확인부족대부분이기존trigger미요청이었음. W3seed인식미채택,운영보존. Q4500시간/근거보존. 사용자/멘토/추가199·200자료금지. 모든검산은같은Codex별도수식이지독립사람정답아님. HTML소스/PNG확인,실브라우저렌더검증아님. goal active 유지.\n',encoding='utf8')
+ assert now in paths[0].read_text('utf8') and now in paths[1].read_text('utf8') and R.read(paths[2])['word100_visible_hand_recheck_20261026']['at']==now
+ R.write(U/'SYNC_CHECK.json',dict(at=now,status='PASS_CURRENT_CONTEXT_STATE_HANDOFF',pins={str(p):R.sha(p) for p in paths},report=result,goal_complete=False));print('SYNC_COMPLETE',now,flush=True)
+if __name__=='__main__':finish()

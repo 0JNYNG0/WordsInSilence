@@ -1,0 +1,15 @@
+from source_boundary_core import *
+from graph import record
+ROOT=O.parents[2];assert read(B/'VERIFICATION.json')['protected_unchanged']
+summary='신체 관계만 보는 구간 판정부와, 실제 RGB에서 확인한 시작·끝 불확실 범위를 직접 배우는 판정부를 같은 공개24원본으로 비교했다. 손모양만 바꿔도 구간 찾기의 몸 입력이 그대로인 것은 확인했다. 몸 입력만 사용한 대조는 역방향·손모양 복합시험의 차이 근거를 더 찾았지만 정상 순서를 겹치게 연결했다. 직접 시작·끝 판정부는 학습 영상의 경계는 맞춰도 다른 공개 수행자의 경계에서 크게 떨어졌다. 두 후보 모두 웹 미채택이다.'
+remaining='시작·끝 판정부의 학습 표본을 잘 맞힌 것이 새 사람의 행동 범위를 잘 찾는다는 뜻은 아니었다. 일부 움직임 확인점에만 준 존재 정답을 구간 전체 평균 확률로 해석한 추가 가정도 확인했으나, 그 조건만 고쳐 해결된다고 볼 근거는 없다. 확인된 움직임 전체를 담는 구간을 다른 후보보다 높게 고르는 학습 목표와, 사람별 경계 차이의 학습 근거를 점검한다. 분류확률·진행표본 포함을 교육적 완료로 사용하지 않는다.'
+nxt='공개 FIT의 경계 정답으로 후보 순위 학습이 가능한지 먼저 검산한다. 확인된 시작끝 범위/진행표본을 보존한 후보와 준비·마무리가 섞인 후보를 직접 구분하며, 손모양 정오는 별도 유지한다. 필요하면 기존 공개 FIT 수행자03·07의 추가 주석을 원본 RGB로 확인하되 기존 분리와 최종8은 건드리지 않는다. G2 통과 전 웹교체·최종평가 금지. 오전7시에는 발표자료 마감으로 전환한다.'
+(B/'RESULT_KO.txt').write_text(summary+'\n\n'+remaining+'\n\n'+nxt+'\n\n동일Codex 구현과 별도 프로세스 산술검산. 독립 사람·수어전문가 정답 검증 아님. 첫 입력 풀링 오류 두 건은 학습 전에 검출·격리했으며 v3 유효입력으로만 학습했다. 보호477파일 불변.\n','utf-8')
+record('G2','REWORK',dict(normal_preserved=False,false_support_reduced=False,three_seeds=True),[B/'VERIFICATION.json',B/'TARGET_DIAGNOSIS.json',B/'DECODE_CONTRACT_AUDIT.json'],'Direct boundary targets overfit FIT; body window improves reversal but overlaps normal actions. No adoption; audit candidate-ranking target and source diversity.')
+ce=read(U/'CURRENT_EXECUTION.json');ce.update(at=stamp(),status='G2_BOUNDARY_GENERALIZATION_REWORK',training_running=False,process_running=False,current_command=None,session_id=None,last_completed=str(B/'VERIFICATION.json'),next=nxt);ce['completed_experiments']=list(dict.fromkeys(ce['completed_experiments']+['source_boundary_candidate_v3']));write(U/'CURRENT_EXECUTION.json',ce)
+s=read(O/'STATE.json');s.update(current_stage=U.name,next_single_action=nxt,last_updated=stamp(),updated_at=stamp(),activity_state='OVERNIGHT_CONTINUING');s[U.name].update(status=ce['status'],at=stamp(),training_running=False,latest_evidence=ce['last_completed'],progress=summary,remaining=remaining+' '+nxt);write(O/'STATE.json',s)
+title='2026-11-12 직접 시작끝 학습 비교 — 사람 간 경계 일반화 보완';p=ROOT/'WordsInSilence_PROJECT_CONTEXT.md';v=p.read_text('utf-8-sig');assert title not in v
+for marker,body in [('## 8. 현재 상태 — 반드시 새 대화에서 먼저 확인',summary+'\n'+remaining),('## 9. 다음 단일 작업',nxt)]:v=v.replace(marker,marker+'\n\n### '+title+'\n'+body+'\n근거: `research/front_keyphase_v1/ops/word100_web_completion_graph_20261111/candidate_description_supervision/source_boundary_candidate_v3/RESULT_KO.txt`, `VERIFICATION.json`, `TARGET_DIAGNOSIS.json`.\n',1)
+p.write_text(v,'utf-8');(ROOT/'NEW_CHAT_HANDOFF.md').write_text('# 최신 인수인계 — 새벽 자율작업 계속\n\n'+summary+'\n\n'+remaining+'\n\n'+nxt+'\n\n현재 학습/평가 프로세스 없음. 완료결과 재실행 금지. 발표용18그림+DTW공개재생영상 준비. 07시 연구 마감→09시 자료정리. 기존C·T3-F/공통100/웹보존, 사용자·멘토·최종8·카메라미접근. 3검토에이전트 quota오류재호출안함. 동일Codex 별도검산≠독립사람정답.\n','utf-8')
+with (ROOT/'Docs/PROJECT_DIRECTION_HISTORY_KO.txt').open('a',encoding='utf-8') as f:f.write('\n\n'+title+'\n'+summary+'\n'+remaining+'\n'+nxt+'\n')
+print('Boundary checkpoint synchronized')

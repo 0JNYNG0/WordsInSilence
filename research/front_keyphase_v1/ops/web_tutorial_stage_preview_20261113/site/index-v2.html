@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Words in Silence · 가상 연습실</title><link rel="icon" href="data:,"><link rel="stylesheet" href="style-v2.css"></head>
+<body><main id="stage">
+  <canvas id="world" aria-label="MOA와 캐릭터가 있는 3D 가상 공간"></canvas>
+  <div class="vignette"></div><canvas id="optics" aria-hidden="true"></canvas>
+  <header>
+    <a class="brand" href="#" id="home"><span class="brand-mark">w<span>·</span>s</span><span>WORDS IN SILENCE<small>가상 연습실</small></span></a>
+    <nav class="steps" aria-label="장면 바로가기"><button data-scene="intro" class="selected"><i>01</i> 만나기</button><b></b><button data-scene="practice"><i>02</i> 연습</button><b></b><button data-scene="quest"><i>03</i> 실전</button></nav>
+    <div class="top-controls"><span class="preview-tag">연출 미리보기</span><button id="motion" aria-pressed="false">효과 줄이기</button><button id="reset">처음으로 ↺</button></div>
+  </header>
+  <div class="room-label"><span id="room-type">TUTORIAL ROOM</span><h1 id="room-title">처음 만나는, 새로운 대화</h1><p id="room-caption">말 대신 손으로, 함께 시작해요.</p></div>
+  <section id="practice-heading" hidden><span>PRACTICE ROOM</span><h2>모아와 함께, 천천히</h2><p>가운데 캐릭터를 보며 동작을 살펴보세요.</p></section>
+  <section id="quest-panel" aria-label="실전 퀘스트 진행" hidden>
+    <div class="quest-eyebrow">첫 번째 심부름 <span>인사하고, 사과 다섯 개 부탁하기</span></div>
+    <ol id="quest-track">
+      <li class="current" data-step="0" aria-current="step"><span class="quest-circle">1</span><span class="quest-word">인사</span></li>
+      <li class="connector" aria-hidden="true"><span></span></li>
+      <li data-step="1"><span class="quest-circle">2</span><span class="quest-word">사과</span></li>
+      <li class="connector" aria-hidden="true"><span></span></li>
+      <li data-step="2"><span class="quest-circle">3</span><span class="quest-word">5</span></li>
+    </ol>
+    <p id="quest-prompt" aria-live="polite">먼저 인사를 건네 보세요.</p>
+    <div id="quest-success" hidden role="status"><span>✓</span><strong>퀘스트 성공</strong><small>인사부터 마지막 부탁까지 전했어요.</small></div>
+  </section>
+  <div id="npc-scan" aria-hidden="true"></div>
+  <div id="avatar-controls" hidden><span>캐릭터 살펴보기</span><div><button id="rotate-left" aria-label="캐릭터 왼쪽으로 회전">↶</button><button id="rotate-right" aria-label="캐릭터 오른쪽으로 회전">↷</button><button id="zoom" aria-label="캐릭터 확대">＋</button><button id="gesture">동작 시험 보기</button></div><small id="gesture-note">기존 공개 동작 적용 시험 · 교육용 검수 전</small></div>
+  <section id="self-view" hidden aria-label="중앙 아래 내 촬영 화면 자리"><div class="camera-top"><span><i></i> 내 모습</span><small>카메라 연결 전</small></div><div class="camera-placeholder"><svg viewBox="0 0 64 46" aria-hidden="true"><rect x="7" y="12" width="35" height="25" rx="6"></rect><path d="m42 19 14-7v25l-14-7M21 7h10"></path></svg><p>내 촬영 화면</p><small>시선은 가운데 캐릭터를 향해요</small></div></section>
+  <aside id="preview-controls" hidden><span class="test-label">연출 확인용</span><p>실제 인식 판정은 아직 연결 전이에요.</p><button id="simulate-success">‘인사’ 성공 연출 확인 <span>→</span></button><button id="quest-reset" class="text-button">퀘스트 다시 보기</button><small id="event-log" aria-live="polite"></small></aside>
+  <section class="dialogue" id="dialogue" aria-label="대화"><div class="speaker"><i></i><span id="speaker">MOA</span><small id="speaker-role">당신의 수어 연습 친구</small></div><p id="line" aria-live="polite"></p><button id="next"><span id="next-label">함께 시작하기</span><span class="arrow">→</span></button><span class="key-tip">Space · 문장 바로 보기 / 다음</span></section>
+  <footer><span>작은 손짓으로 이어지는 세계</span><span id="status">모델을 불러오는 중</span></footer>
+  <div id="loading"><div class="loader-symbol">w<span>·</span>s</div><span class="loading-line"></span><p>연습실을 준비하고 있어요.</p><small>기존 로봇과 캐릭터 불러오는 중</small></div>
+  <div id="error" hidden role="alert"><h2>연습실을 열지 못했어요.</h2><p></p><button onclick="location.reload()">다시 열기</button></div>
+</main><script type="module" src="app-v2.js"></script></body></html>

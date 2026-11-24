@@ -1,4 +1,5 @@
 using UnityEngine;
+using WordsInSilence.Recognition.Diagnostics;
 
 namespace WordsInSilence.Pose
 {
@@ -19,6 +20,9 @@ namespace WordsInSilence.Pose
 
         /// <summary>33개 visibility 점수 (0~1).</summary>
         public float[] Visibility;
+
+        /// <summary>Typed inference geometry acquisition result from DetectForVideo. Null when provider does not support geometry.</summary>
+        public Step9DGeometryAcquisitionResult InferenceGeometryResult;
 
         // ─── 랜드마크 인덱스 상수 (MediaPipe Pose 정의) ──────────────────────
         const int IdxNose           = 0;

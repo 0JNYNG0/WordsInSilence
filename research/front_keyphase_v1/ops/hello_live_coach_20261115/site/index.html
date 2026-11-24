@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>안녕하세요 · 실시간 코칭</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="app">
+  <header class="page-head">
+    <div><p class="eyebrow">MOA와 수어 연습</p><h1>안녕하세요 <span>단계별 코칭 시험</span></h1></div>
+    <div class="head-status"><span id="progressCount" class="progress-count">0 / 2 동작 확인</span><div class="connection" id="connection"><span class="status-dot"></span><span id="connectionText">분석기 준비 중</span></div></div>
+  </header>
+
+  <section class="steps" aria-label="확인할 두 동작">
+    <article class="step" id="step0" data-state="pending">
+      <div class="step-number" aria-hidden="true">01</div>
+      <div class="step-copy"><div class="step-title"><h2 id="stepLabel0">팔을 따라 쓸기</h2><span class="step-status" id="stepStatus0">아직 확인 전</span></div><p id="stepGuide0">손을 편 채 팔을 따라 손목 쪽으로 움직여요.</p></div>
+      <button type="button" class="stage-watch" data-stage="0" title="첫 번째 참고 구간 보기" aria-label="첫 번째 참고 구간 보기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l9 6-9 6z"/></svg></button>
+    </article>
+    <div class="step-connector" aria-hidden="true"><span id="stepConnector"></span></div>
+    <article class="step" id="step1" data-state="pending">
+      <div class="step-number" aria-hidden="true">02</div>
+      <div class="step-copy"><div class="step-title"><h2 id="stepLabel1">두 주먹 움직이기</h2><span class="step-status" id="stepStatus1">아직 확인 전</span></div><p id="stepGuide1">양손 모양을 유지하며 다음 움직임을 이어가요.</p></div>
+      <button type="button" class="stage-watch" data-stage="1" title="두 번째 참고 구간 보기" aria-label="두 번째 참고 구간 보기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l9 6-9 6z"/></svg></button>
+    </article>
+  </section>
+
+  <section class="viewers" aria-label="참고 동작과 현재 모습">
+    <article class="viewer reference-viewer">
+      <div class="viewer-head"><h2>참고 동작</h2><button id="referenceRestart" class="text-button" type="button">처음부터 보기 ↺</button></div>
+      <div class="video-space"><video id="reference" controls muted playsinline loop preload="metadata" aria-label="안녕하세요 공개 참고 동작"></video><div id="referenceError" class="video-note" hidden>참고 영상을 불러오지 못했어요.</div></div>
+      <div class="viewer-foot"><span>AIHub 공개 참고 · 수행자 기준 좌우</span><span id="referenceHint">재생 버튼으로 먼저 살펴보세요</span></div>
+    </article>
+    <article class="viewer live-viewer">
+      <div class="viewer-head"><h2 id="liveTitle">내 모습</h2><span class="source-badge" id="sourceBadge">카메라 꺼짐</span></div>
+      <div class="video-space live-space" id="liveSpace">
+        <img id="preview" alt="관절 표시가 함께 나오는 실시간 관측 화면" hidden>
+        <div class="camera-empty" id="cameraEmpty"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="16" width="40" height="29" rx="7"/><circle cx="32" cy="30" r="8"/><path d="M25 53h14M32 45v8"/></svg><p>준비되면 카메라를 켜 주세요.</p><span>촬영 종료를 기다리지 않고, 움직이는 동안 안내해요.</span></div>
+        <div class="video-overlay" id="videoOverlay" hidden><div class="spinner" id="spinner"></div><strong id="overlayNumber" hidden></strong><p id="overlayText"></p></div>
+        <div class="live-indicator" id="liveIndicator" hidden><span></span><b id="liveIndicatorText">실시간 관측</b></div>
+      </div>
+      <div class="viewer-foot"><span id="frameStatus">상반신과 양손이 보이도록 앉아 주세요.</span><span id="liveMetric"></span></div>
+    </article>
+  </section>
+
+  <section class="coach" aria-label="MOA의 교정 안내">
+    <div class="moa-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path class="moa-shell" d="M13 12h22a8 8 0 018 8v15a6 6 0 01-6 6H11a6 6 0 01-6-6V20a8 8 0 017-8z"/><path d="M24 12V7"/><circle class="antenna" cx="24" cy="5" r="2.5"/><rect class="moa-face" x="12" y="19" width="24" height="15" rx="6"/><path class="moa-eyes" d="M18 26v2m12-2v2"/></svg></div>
+    <div class="coach-main"><p class="coach-label">MOA <span id="coachPhase">연습 준비</span></p><p class="coach-message" id="coachMessage" aria-live="polite" aria-atomic="true">참고 동작을 보고, 첫 번째 동작부터 따라 해 보세요.</p><p id="diagnosticHint" class="diagnostic-hint" data-tone="neutral" hidden><span id="diagnosticCategory"></span><span id="diagnosticHeld"></span></p><div class="checks" id="checks" aria-label="현재 자세 확인 항목"><span class="check" data-state="pending">관측을 시작하면 확인 항목이 나타나요</span></div></div>
+  </section>
+
+  <div class="action-row">
+    <div class="primary-actions"><button type="button" id="cameraStart" class="button primary" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="13" height="14" rx="3"/><path d="M16 9l5-3v12l-5-3z"/></svg>카메라로 연습</button><button type="button" id="publicStart" class="button secondary" disabled>공개 영상으로 확인</button><button type="button" id="reset" class="button quiet" disabled>처음부터</button><button type="button" id="stop" class="button quiet" disabled>종료</button></div>
+    <div class="legend" aria-label="색상 의미"><span><i class="dot green"></i>항목 충족</span><span><i class="dot amber"></i>교정 필요</span><span><i class="dot gray"></i>확인 전·관측 부족</span></div>
+  </div>
+  <p id="error" class="error" role="alert" hidden></p>
+  <p class="scope" id="scope">초록색은 확인한 항목의 표시이며, 수어 전체가 완벽하다는 뜻은 아닙니다. 촬영은 학습·튜닝에 사용하지 않습니다.</p>
+  <details class="scope-details"><summary>이번 시험에서 확인하는 범위 · 관측 이유</summary><p id="scopeDetail">손가락은 학습된 손모양 신경망으로 봅니다. 팔을 따라 쓸기와 양손의 위아래 이동 방향은 기존 시간 합성곱+GRU의 특징과 공개 자료로 추가 학습한 움직임 판정부를 함께 사용합니다. 단계 순서·반복 횟수·시작과 끝의 조건에는 진행 규칙을 함께 적용합니다. 엄지·정확한 손바닥 방향·실제 접촉과 새로운 사용자의 정확도는 아직 완전 검증하지 않았습니다.</p><div id="actionObservation" class="action-observation" data-state="pending" aria-label="행동 모델의 흐름 관측"><span class="action-label">움직임 흐름</span><span id="actionStatus" class="action-status">확인 전</span><span id="actionMessage">관측을 시작하면 움직임의 흐름을 함께 살펴봐요.</span></div><p id="actionModelDetail">행동 모델의 연결 상태는 관측 결과에서 확인합니다. 단어 인식 TCN은 이 화면에서 사용하지 않으며, 단계 확인이 수어 전체의 정답을 뜻하지 않습니다.</p>
+    <section class="diagnostic-details" aria-labelledby="diagnosticTitle"><h2 id="diagnosticTitle">지금 확인 못한 이유</h2><p id="diagnosticLastReason">관측을 시작하면 확인하지 못한 이유가 나타나요.</p><p id="diagnosticTotals">아직 관측 기록이 없어요.</p><div id="diagnosticCounts" class="diagnostic-counts" aria-label="현재 연습의 이유별 관측 횟수"></div><p>각 숫자는 관측 횟수이며 동작 오류 횟수나 정확도가 아닙니다. 같은 이유가 이어지면 여러 번 집계됩니다.</p><h3>직전 연습의 관측 요약</h3><p id="diagnosticPrevious">아직 끝난 연습이 없어요.</p><p>최근 연습 요약은 서버 메모리에만 남고 서버를 종료하면 사라집니다. 이 요약에는 영상·좌표를 저장하지 않습니다.</p></section>
+  </details>
+  <p class="public-notice" id="publicNotice" hidden>공개 영상의 순차 입력을 보는 기능입니다. 새로운 사용자의 정확도 시험 결과는 아닙니다.</p>
+</main>
+<script src="/presenter.js" defer></script>
+<script src="/app.js" defer></script>
+</body>
+</html>

@@ -85,7 +85,7 @@ namespace WordsInSilence.Pose
 
         void OnToggleAssociation(bool val)
         {
-            if (_poseOverlay != null) _poseOverlay.ShowAssociationLines = val;
+            if (_poseOverlay != null) _poseOverlay.ShowBones = val;
         }
 
         // ─── Internal ────────────────────────────────────────────────────────

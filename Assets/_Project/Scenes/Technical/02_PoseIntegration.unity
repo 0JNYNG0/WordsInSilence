@@ -7499,7 +7499,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: WordsInSilence.Runtime::WordsInSilence.Pose.PoseIntegrationTestUI
   _integrator: {fileID: 31274043}
-  _poseOverlay: {fileID: 0}
+  _poseOverlay: {fileID: 1477664377}
   _textDiagnostics: {fileID: 1981667906}
   _toggleShowPose: {fileID: 0}
   _toggleShowShoulder: {fileID: 0}

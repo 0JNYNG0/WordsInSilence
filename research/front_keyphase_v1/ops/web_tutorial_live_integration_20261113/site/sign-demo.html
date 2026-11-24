@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>원본과 캐릭터 · 수어 시범</title><link rel="icon" href="data:,"><link rel="stylesheet" href="sign-demo.css"></head>
+<body><main>
+<header><div><p class="eyebrow">동작을 보고 따라 해요</p><h1 id="title">시범 불러오는 중</h1></div><nav aria-label="시범 단어"><a href="?word=WORD0099">사과</a><a href="?word=WORD1290">감사</a></nav></header>
+<div class="comparison"><figure><figcaption>원본 · 공개 참고 영상</figcaption><video id="source" muted playsinline preload="auto"></video><span>수행자의 오른손은 화면 왼쪽이에요.</span></figure><figure><figcaption>3D 캐릭터 · 같은 순간</figcaption><canvas id="avatar" aria-label="회전해서 살펴보는 수어 캐릭터"></canvas><div class="view"><button id="left" aria-label="캐릭터 왼쪽으로 회전">↶</button><button id="front">정면</button><button id="right" aria-label="캐릭터 오른쪽으로 회전">↷</button><button id="zoom" aria-label="손과 상체 확대">확대</button></div></figure></div>
+<div class="timeline"><input id="seek" type="range" min="0" max="1000" value="0" aria-label="시범 시점"><output id="time"></output></div>
+<div class="playback"><button id="play" disabled>함께 재생</button><button id="restart" disabled>처음부터</button><button id="speed" aria-pressed="true">느리게 · 0.5배</button><label><input id="loop" type="checkbox" checked> 반복</label><span id="state" role="status">원본과 캐릭터를 준비하고 있어요.</span></div>
+<div id="steps" aria-label="동작별로 보기"></div><p id="note"></p><p class="source-note">원본: AIHub 수어 영상 · 캐릭터: Ch29. 공개 영상의 움직임을 캐릭터 체형에 맞춰 옮긴 시범입니다.</p>
+</main><script type="module" src="sign-demo.js"></script></body></html>

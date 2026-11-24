@@ -1,0 +1,17 @@
+from common import *
+from collections import Counter
+c=read(U/'PREP_CONTEXT.json');v=read(U/'INPUTS_INDEPENDENT.json');p=read(U/'PREP_RESULT.json');s=read(U/'REVIEW_SELECTION.json')
+assert v['status']=='PASS' and not v['semantic_mismatches'] and p['records']==1199
+assert len(s['clips'])==96 and len(s['pages'])==16
+checkpins(c['pins']);checkpins(p['record_pins']);checkpins(read(U/'PREP_CODE_v2.json')['pins'])
+write(U/'INDEPENDENT_RECOVERY.json',{'at':now(),'first_error':'FIRST_INDEPENDENT_ERROR.json','cause':'Legacy diagnostic full observation is not the actual C boundary-clipped observation baseline. Two of40 controls were already partial under C.','controls_by_actual_state':dict(Counter(r['actual_C_control_state'] for r in v['control_states'])),'actual_C_observations_preserved':40,'boundary_tolerance_changed':False,'independent_scalar_states_checked':v['hand_states_scalar_checked'],'new_normal_observation_loss':0},new=True)
+notes=[
+ 'Pages01-04: lowered hands and active hand points retained as in C. WORD0185_REAL01 f51 has uncertain coarse interior extent despite hand near lower boundary. No corrective word exception applied.',
+ 'Pages05-08: WORD0920_REAL01 overlap has intersection cues; believe/ancestor vary across neighboring frames. Swimming hand/forearm occlusion can lack hand-intersection cue. Visible palm detector failures remain in airport-market and wound.',
+ 'Pages09-12: missing inside hand, assignment uncertainty, and lowered resting hand remain distinct. WORD2309_REAL01 overlap suspicion persists while history proximity expires. Four-seasons active hands remain above boundary.',
+ 'Pages13-16: single-hand number signs retain active hand observations; resting hand boundary/unknown states remain. Italy/one-hundred-million/five-hundred-million have visible active hands missed by detector, indicated only as arm/position estimates. No new point removal or temporal cut introduced.'
+]
+review={'status':'PASS_FOR_FROZEN_TRAINING_COMPARISON','at':now(),'reviewer':'Codex same operator; visual assessment separate from scalar verification, no independent human/expert claim','scope':'Representative TRAIN still frames only; not every interval, not sign-language correctness certification','pages_inspected':s['pages'],'clips':s['clips'],'selected_frame_slots':sum(len(r['items']) for r in s['clips']),'known68_reused':True,'already_complete4words_reused':c['all_train_clips_already_reviewed_words'],'notes':notes,'known_remaining_limits':['Pose hand extent may miss actual boundary crossing','hand/arm or face occlusion and depth order unresolved','intersection absence is not proof of no overlap','no missing finger recovery'],'new_coordinate_or_mask_changes':0,'blockers':[],'page_pins':{x:sha(x) for x in s['pages']},'model_scores_used_for_review':False}
+write(U/'VISUAL_REVIEW.json',review,new=True)
+write(U/'READY.json',{'status':'PASS','at':now(),'training_allowed':True,'blockers':[],'prep_context_sha256':sha(U/'PREP_CONTEXT.json'),'data_scope':{'TRAIN':899,'DEV':300,'user':0,'mentor':0,'heldout':0},'evidence':{str(U/n):sha(U/n) for n in ['PREP_RESULT.json','INPUTS_INDEPENDENT.json','VISUAL_REVIEW.json','PREP_CODE_v2.json','INDEPENDENT_RECOVERY.json']},'conditions':'Known imperfect estimates retained as separate uncertain cues; no coordinate repair, deletion, refitting thresholds or model replacement. Only frozen C0/C1 six-run comparison.'},new=True)
+print('READY: public input audit complete; six frozen comparison runs authorized.')

@@ -1,0 +1,3 @@
+from common import *
+p=U/'EXPOSURE_AUDIT.json';v=read(p);v['groups']['development']['status']='Historical or exposed development/preparation; common300 repeatedly evaluated, selected_extra18 prepared/annotated; no fresh evaluation claim';v['review_correction']='Avoid claiming every318 prepared development clip was repeatedly inferred';write(p,v)
+p=U/'prepare_contracts.py';s=p.read_text('utf-8-sig').replace("'Historical development, repeatedly evaluated'","'Historical or exposed development/preparation; common300 repeatedly evaluated, selected_extra18 prepared/annotated'");p.write_text(s,'utf-8')

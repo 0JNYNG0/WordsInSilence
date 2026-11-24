@@ -1,0 +1,39 @@
+"""Record reviewed evidence and synchronize the current handoff, no models touched."""
+from pathlib import Path
+from datetime import datetime,timezone,timedelta
+import json,html
+from run import read,write,sha
+U=Path(__file__).resolve().parent;O=U.parent;ROOT=O.parents[2]
+def main():
+ now=datetime.now(timezone(timedelta(hours=9))).isoformat(timespec='seconds');s=read(U/'SUMMARY.json');v=read(U/'INDEPENDENT.json');imgs=read(U/'REVIEW_IMAGES.json');assert v['status']=='PASS' and s['counts']['withheld']==1
+ assert not (U/'RUNNING.json').exists()
+ notes=[
+  '43/45/47프레임 원본 RGB: 왼팔은 계속 내려가 있고 오른손이 올라옴. 45프레임의 두 후보는 오른손 주변에 있음. 잘못된 왼손 배정만 보류하고 오른손은 유지.',
+  '후원: 양팔이 중앙에서 겹치고 오른손이 위로 보이는 장면. 두 손의 기존 색/배정 유지.',
+  '대지 REAL01: 34~38프레임 팔 교차가 분명해지는 장면. 왼손이 화면 왼쪽, 오른손이 화면 오른쪽으로 이동해도 배정 유지.',
+  '대지 REAL03: 가슴 앞 교차, 왼손이 다른 팔 아래에 일부 가려짐. 배정 유지, 모든 손가락 좌표의 정확성 인증은 불가.',
+  '대지 REAL05: 밀접하게 겹친 손에서 한 후보가 나타났다 사라지는 기존 현상. 이번 후보가 추가 제거하지 않았음. 가려진 손가락 정답은 불확실.',
+  '대지 REAL06: 양팔 교차 및 분리된 손 위치. 이전/이후 좌우 배정 일치.',
+  '대지 REAL08: 양팔 교차. 기존 배정 유지, 일부 손가락 형상은 단순 점 그림으로 정확성 확정 불가.',
+  '대지 REAL09: 양팔 교차. 기존 배정 유지.',
+  '독재자: 오른손이 왼팔 위로 넘어온 장면. 화면의 좌우 위치와 무관하게 기존 배정 유지.'
+ ]
+ write(U/'VISUAL_REVIEW.json',{'status':'REVIEWED_ALL_CHANGED_EVENTS_AND_8_CROSSING_EXAMPLES','reviewer':'Codex image inspection; no independent anatomical annotator','sequences':[{**e,'finding':notes[i]} for i,e in enumerate(imgs)],'total_source_frames_viewed':27,'all_changed_events_reviewed':True,'new_regression_in_changed_events':False,'limits':['315 geometry-filtered frames are preservation checks, not315 ground-truth crossing annotations.','899 full clips were numerically replayed, not all RGB frames manually inspected.','Clasped fingers/occluded details remain uncertain.']})
+ write(U/'NEXT_PLAN.json',{'status':'AWAIT_USER_REVIEW_NO_TRAINING','next':'Review narrow duplicate-guard result; retain C. Do not infer classifier gains. If further work approved, categorize public label-only/occluded cases before broadening guard or fixing training comparison.', 'training_allowed_now':False,'user_data_allowed':False,'production_changed':False})
+ body='''<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>손 배정 보완 검증 결과</title><style>body{background:#edf2f7;color:#172b42;font-family:Malgun Gothic,Arial,sans-serif;margin:0}main{max-width:1100px;margin:36px auto;padding:24px}h1{font-size:32px}p,li{line-height:1.8}section{background:white;border-radius:16px;padding:26px;margin:20px 0}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:14px;border-bottom:1px solid #ddd}img{width:100%;height:auto}summary{cursor:pointer;font-weight:bold;padding:14px}strong{color:#146b80}.tag{padding:8px 15px;background:#ddeeea;border-radius:20px;display:inline-block}.note{background:#fff2d2;padding:18px;border-radius:12px}a{color:#145f86}</style><main><span class="tag">공개 자료 검증 완료 · 기존 C 유지 · 학습 미실행</span><h1>한 손이 두 손으로 잘못 들어가는 경우를 보완했어요</h1><section><p>검출기가 같은 손을 두 번 잡고 서로 다른 좌우 이름표를 붙이면, 실제로는 한 손인데 두 손처럼 입력될 수 있었어요.</p><p><strong>몸 관절과 직전 움직임이 이름표를 함께 반박하고, 해당 손에 더 확실한 후보가 있을 때만 약한 배정을 보류</strong>하도록 바꿨어요. 실제 두 손이 교차하는 경우에는 각 손의 근거를 유지해요.</p><p>단어별 예외와 새 임계값은 넣지 않았어요.</p></section><section><h2>공개 학습 영상 899개, 두 검출 조건을 비교했어요</h2><table><tr><th>확인한 항목</th><th>결과</th></tr><tr><td>전체 비교</td><td>226,362프레임</td></tr><tr><td>중복 오배정 보류</td><td>1개 영상의 1프레임</td></tr><tr><td>그 외 후보 배정</td><td>305,601건 그대로</td></tr><tr><td>새 좌우 뒤집힘 / 새 강제 배정</td><td>0 / 0</td></tr><tr><td>교차 형태 후보</td><td>315프레임 기존 배정 유지</td></tr><tr><td>계약 검사 / 별도 계산</td><td>13개 통과 / 전수 집계 일치</td></tr></table><p>같은 손을 여러 프레임 세는 수치예요. 기존 배정과 같다는 뜻이며, 모든 관절이 정확하다는 인증은 아니에요.</p></section><section><h2>실제로 달라진 장면</h2><p>아래 가운데 줄이 변경된 프레임이에요. 기존에는 오른손 주변에 파란 왼손까지 붙었지만, 보완 후에는 그 후보만 빨간 ×로 보류했어요. 실제 오른손은 주황색으로 남아 있어요.</p><img src="evidence/01_all_changed.jpg" alt="중복 후보의 기존 배정과 보완 배정"><p>공개 자료 ‘이만오천’ REAL06. 이 단어 이름은 설명에만 쓰며 배정 규칙은 모든 단어에 같아요.</p></section><section><h2>남은 문제</h2><ul><li>라벨만으로 배정된 456건은 그대로예요. 456건 모두 오류라는 뜻은 아니어서 일괄 제거하지 않았어요.</li><li>가려져서 검출되지 않은 손, 잘못된 손가락 좌표는 이번 수정으로 복구되지 않아요.</li><li>확인한 개선은 한 프레임의 잘못된 배정이에요. 단어 인식률이나 새 사용자 성능이 좋아졌는지는 아직 측정하지 않았어요.</li></ul><p class="note">이번 결과는 작은 입력 처리 오류의 수정 근거예요. 큰 인식률 향상의 증거로 발표하면 안 돼요. 기존 C·웹·DTW는 그대로이며, 사용자 촬영은 사용하지 않았어요.</p></section><section><h2>교차·겹침 장면도 비교했어요</h2><p>315개 기하학적 교차 후보는 전수 배정이 같았어요. 아래 8개 원본의 전후 장면도 확인했어요. ‘masked’는 이 배정 비교에서 전체 영상의 검출 스트림을 뜻해요. 학습 범위를 바꾼 것은 아니에요.</p>'''
+ for i,e in enumerate(imgs[1:],1):
+  name=Path(e['image']).name
+  body+=f'<details><summary>{html.escape(e["label"])} · {html.escape(e["clip_id"])}</summary><p>{html.escape(notes[i])}</p><img loading="lazy" src="evidence/{name}"></details>'
+ body+='</section><section><h2>검증 범위</h2><p>작성과 검산은 같은 Codex가 했고 별도 식·스크립트로 확인했어요. 새 사람 정답 주석을 이용한 독립 정확도 평가는 아니에요. 최초 계약 시험의 잘못된 예상값은 원본 기록을 보존하고 시험 데이터만 정정했어요. 보완 규칙은 바꾸지 않았어요.</p><p><a href="RESULT_KO.txt">상세 결과</a> · <a href="INDEPENDENT.json">검산 기록</a> · <a href="VISUAL_REVIEW.json">장면 검토 기록</a></p></section></main></html>'
+ (U/'RESULT_KO.html').write_text(body,'utf-8')
+ status='공개 TRAIN899의 두 검출 조건 226,362프레임을 재생·기존 배정 전수 재현. 라벨 단독+반대쪽 현재 손목·추적+강한 다른 후보가 함께 있는 경우만 보류하는 공통 guard 구현. 알려진 WORD2885_REAL06_F sensor45의 중복 오배정1건 보류, 그외305,601후보 동일/새뒤집힘0/강제배정0/후속전파변경0. 근거 있는 기존배정302,738보존(정답인증아님), 기하학적교차315프레임보존·원본8영상24장면검토. 전체변경1장면전후3장검토. 계약13/별도scalar전수/순서2232/prefix1110 PASS. 라벨단독456건·완전가림미검출·손가락좌표오류미해결, 인식률향상미측정. 최초합성시험fixture예상오류는원검증코드보존후verify_v2로정정;규칙계수불변. 기존C/TCN/DTW/웹유지, 학습·추론0, 사용자/멘토/DEV/보류사용0.'
+ nxt='word100_assignment_conflict_20261018/RESULT_KO.html·RESULT_KO.txt 결과를사용자와확인. 검증된좁은guard는별도후보로보존, C유지. 한프레임수정으로큰인식률개선을추정하지않는다. 추가보완은공개라벨단독/완전가림사례분류후검토. 학습·운영연결은아직하지않고결과확인및비교계획동결후사용자승인범위에서진행. 사용자자료학습/튜닝/선택금지.'
+ p=ROOT/'WordsInSilence_PROJECT_CONTEXT.md';text=p.read_text('utf-8-sig')
+ h='## 8. 현재 상태 — 반드시 새 대화에서 먼저 확인';assert text.count(h)==1;text=text.replace(h,h+'\n\n### 2026-10-18 중복 후보·라벨 단독 배정 공통 보완 검증 완료\nops/word100_assignment_conflict_20261018. '+status+'\n',1)
+ h='## 9. 다음 단일 작업';assert text.count(h)==1;text=text.replace(h,h+'\n\n### 2026-10-18 중복 배정 보완 결과 검토·학습 대기\n'+nxt+'\n',1);p.write_text(text,'utf-8')
+ p=O/'STATE.json';state=read(p);state['current_stage']='WORD100_ASSIGNMENT_CONFLICT_GUARD_VERIFIED_AWAITING_REVIEW';state['next_single_action']=nxt;state['word100_assignment_conflict_20261018']={'at':now,'status':'COMPLETE_AWAITING_REVIEW','result':str(U/'RESULT_KO.html'),'public_train_videos':899,'frames':226362,'raw_candidates':305602,'duplicate_wrong_assignment_withheld':1,'unchanged_candidate_slots':305601,'crossing_projection_preserved':315,'new_side_flips':0,'non_label_assignments_preserved':302738,'remaining_label_only':456,'independent':'PASS','contracts':13,'visual_sequences':9,'new_training':0,'production_changed':False,'user_mentor_dev_heldout_used':False,'limitations':'Narrow known TRAIN defect correction, no classifier/new-person performance result.'};p.write_text(json.dumps(state,ensure_ascii=False,indent=2)+'\n','utf-8')
+ (ROOT/'NEW_CHAT_HANDOFF.md').write_text('# WordsInSilence 최신 인수인계\n\n갱신 '+now+'\n\n### 현재 목표·마지막 완료\nops/word100_assignment_conflict_20261018. '+status+'\n\n### 다음 단일 작업\n'+nxt+'\n\n실행40847/검산/시각화31578 종료0. 현재실행·잠금없음. st-gcn자동화삭제유지. 동결원본/W:/sources/기존C읽기전용. 구현Codex로컬·동일담당자별도계산검산, 독립인물정답검증아님. CONTEXT/INDEPENDENT/VISUAL_REVIEW/VALIDATION_REPAIR 참조.\n','utf-8')
+ write(U/'COMPLETE.json',{'at':now,'status':'IMPLEMENTED_VERIFIED_AWAIT_USER_REVIEW','training':0,'production_changed':False,'report_sha256':sha(U/'RESULT_KO.txt'),'html_sha256':sha(U/'RESULT_KO.html'),'independent_sha256':sha(U/'INDEPENDENT.json'),'visual_sha256':sha(U/'VISUAL_REVIEW.json'),'sessions_finished':[40847,31578]})
+ current=U/'CURRENT_EXECUTION.json';current.write_text(json.dumps({'status':'completed','sessions':[40847,31578],'training':0,'active':False},indent=2),'utf-8')
+ print('Reports and current state synchronized.')
+if __name__=='__main__':main()

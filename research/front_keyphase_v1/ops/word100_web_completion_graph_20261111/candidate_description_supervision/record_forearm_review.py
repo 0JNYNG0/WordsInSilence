@@ -1,0 +1,4 @@
+from core import *
+s=next(r for r in read(U/'episode_membership/coverage_review/SOURCE_EPISODES_DENSE.json')['rows'] if r['clip_id']=='NIA_SL_WORD0739_REAL08_F');p=W/'short_action_review/NIA_SL_WORD0739_REAL08_F_forearm.jpg';e=s['events'][1]
+assert all(e['onset'][1]<f<e['offset'][0] for f in [77,79]);dst=W/'short_action_review/FOREARM_REVIEW.json';assert not dst.exists()
+write(dst,dict(at=stamp(),status='REVIEWED_SOURCE_PROGRESS_ONLY',rows=[dict(clip_id=s['clip_id'],source_sha256=s['source_sha256'],sheet=str(p),sheet_sha256=sha(p),original_event=e,additional_progression_frames=[77,79],observation='Consecutive source RGB73–84 shows forearm becoming upright;77 and79 are strictly interior progression. No endpoint or semantic label change.',reviewer='root Codex visual review; not independent human/KSL expert')]))

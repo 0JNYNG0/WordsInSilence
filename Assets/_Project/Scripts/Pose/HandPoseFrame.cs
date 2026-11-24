@@ -1,5 +1,6 @@
 using UnityEngine;
 using WordsInSilence.Core;
+using WordsInSilence.Recognition.Diagnostics;
 
 namespace WordsInSilence.Pose
 {
@@ -19,7 +20,9 @@ namespace WordsInSilence.Pose
         /// <summary>몸체 일부가 화면 밖.</summary>
         OutOfFrame,
         /// <summary>Hand도 Pose도 없음.</summary>
-        Invalid
+        Invalid,
+        /// <summary>Hand/Pose inference geometry dimensions differ (fail-closed).</summary>
+        GeometryMismatch
     }
 
     /// <summary>
@@ -70,5 +73,9 @@ namespace WordsInSilence.Pose
 
         // ─── 품질 ─────────────────────────────────────────────────────────
         public FrameDataQuality Quality;
+
+        // ─── 기하 ─────────────────────────────────────────────────────────
+        /// <summary>Merged hand+pose inference geometry. Null when neither provider emits geometry.</summary>
+        public Step9DMergedInferenceGeometry MergedGeometry;
     }
 }

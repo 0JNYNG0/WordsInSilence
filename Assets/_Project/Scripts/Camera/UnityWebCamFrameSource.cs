@@ -100,7 +100,10 @@ namespace WordsInSilence.Camera
                             $"카메라 초기화 타임아웃 ({InitTimeoutSeconds}초).");
                     }
 
-                    await Task.Delay(InitPollIntervalMs, ct).ConfigureAwait(false);
+                    // no ConfigureAwait(false): the loop below and CleanupTexture and
+                    // EmitDiagnostics all touch Unity objects, which requires the Unity
+                    // synchronization context to be preserved across this await
+                    await Task.Delay(InitPollIntervalMs, ct);
                 }
 
                 _isRunning = true;

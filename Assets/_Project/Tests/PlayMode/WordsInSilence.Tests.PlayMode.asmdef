@@ -1,0 +1,17 @@
+{
+    "name": "WordsInSilence.Tests.PlayMode",
+    "rootNamespace": "WordsInSilence.Tests.PlayMode",
+    "references": [
+        "UnityEngine.TestRunner",
+        "WordsInSilence.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": ["nunit.framework.dll"],
+    "autoReferenced": false,
+    "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
