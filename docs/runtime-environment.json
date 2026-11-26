@@ -1,0 +1,14 @@
+{
+  "scope": "Observed development versions, not a portable dependency lock",
+  "python": "3.13.2",
+  "packages": {
+    "numpy": "2.2.5",
+    "scipy": "1.15.2",
+    "torch": "2.12.0",
+    "opencv-python": "4.10.0.84",
+    "openvino": "2026.4.1",
+    "mediapipe": "0.10.33",
+    "fastapi": "0.111.0",
+    "uvicorn": "0.30.1"
+  }
+}

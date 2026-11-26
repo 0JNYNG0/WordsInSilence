@@ -1,0 +1,23 @@
+title = "WordsInSilence public-source scan"
+
+[extend]
+useDefault = true
+
+# Reviewed code false positives only. These are landmark field names and an
+# assertion message, not credentials. No file or commit is broadly skipped.
+[[rules]]
+id = "generic-api-key"
+
+  [[rules.allowlists]]
+  description = "3D landmark category comparisons"
+  condition = "AND"
+  paths = ['''^Tools/s001_step6b_triangulate_(pilot|full)_v1_[0-9_]+\.py$''']
+  regexTarget = "line"
+  regexes = ['''^\s*(is_pose = |elif )cat_key == "(pose|left_hand)_landmarks_3d":?\s*$''']
+
+  [[rules.allowlists]]
+  description = "Fixed descriptor validation message"
+  condition = "AND"
+  paths = ['''^research/front_keyphase_v1/ops/word100_web_completion_graph_20261111/typed_motion_recovery_20261113/g3_explicit_evidence_contract/adapter\.py$''']
+  regexTarget = "line"
+  regexes = ['''^\s*require\(key in spec\['descriptors'\] and key not in items, 'unknown/duplicate descriptor'\)\s*$''']
